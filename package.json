@@ -1,0 +1,24 @@
+{
+  "name": "spintax",
+  "description": "meta",
+  "version": "0.0.67",
+  "dependencies": {
+    "classnames": "^2.2.5",
+    "html-to-text": "^3.2.0",
+    "react": "15.5.3",
+    "react-dom": "15.5.3",
+    "react-portal-tooltip": "^1.1.5",
+    "react-tooltip": "^3.3.0",
+    "sanitize-html": "^1.14.1",
+    "textract": "^2.1.2"
+  },
+  "devDependencies": {
+    "react-scripts": "0.9.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
