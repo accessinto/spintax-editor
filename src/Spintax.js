@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import find from 'lodash/find';
+import findLast from 'lodash/findLast';
 var htmlToText = require('html-to-text');
 import ToolTip from 'react-portal-tooltip';
 import onClickOutside from 'react-onclickoutside';
@@ -20,6 +22,14 @@ function isSelectionBackwards() {
     return backwards;
 }
 
+const findNextSw = (toks, startAt = 0) => {
+  return find(toks, ['type', 3], startAt + 1);
+};
+
+const findPrevSw = (toks, startsAt = toks.length - 1) => {
+  return findLast(toks, ['type', 3], startsAt - 1);
+}
+
 class Spintax extends Component {
   
   state = {
@@ -38,6 +48,7 @@ class Spintax extends Component {
     const text = htmlToText.fromString(RANDOM_SPINTAX, {
       uppercaseHeadings: false,
     });
+    let idGen = 0;
 
     while ((m = r2.exec(RANDOM_SPINTAX)) !== null) {
       // console.log(m.index);
@@ -46,7 +57,9 @@ class Spintax extends Component {
           r2.lastIndex++;
       }
       arr.push({
+        id: idGen++, 
         start: m.index,
+        length: m[0].length,
         end: m.index + m[0].length - 1,
         type: m.indexOf(m[0], 1),
         t: m[0],
@@ -124,11 +137,12 @@ class Spintax extends Component {
   }
 
   handleLeft() {
-    const { focusedId } = this.state;
+    const { toks, focusedId } = this.state;
     if (focusedId === 0) { return; }
-    if (focusedId !== null) {
+    const prevFoc = findPrevSw(toks, focusedId);
+    if (focusedId !== null && prevFoc) {
       this.setState({
-        focusedId: focusedId - 1,
+        focusedId: prevFoc.id,
         selObj: null,
       });
     }
@@ -137,19 +151,20 @@ class Spintax extends Component {
   handleRight() {
     const { focusedId, toks } = this.state;
     if (focusedId === toks.length - 1) { return; }
-    if (focusedId !== null) {
+    const nextFoc = findNextSw(toks, focusedId);
+    if (focusedId !== null && nextFoc) {
       this.setState({
-        focusedId: focusedId + 1,
+        focusedId: nextFoc.id,
         selObj: null,
       });
     }
   }
 
-  handleSpinwordClick(i, tok) {
+  handleSpinwordClick(tok) {
     console.log(tok);
     if(tok.type === 3){
       this.setState({
-        focusedId: i,
+        focusedId: tok.id,
         selObj: null,
       });
     }
@@ -182,17 +197,17 @@ class Spintax extends Component {
         className="sp" 
         style={{ width: '500px', minHeight: '350px' }}
       >
-        {toks.map((tok, i) => (
-          <span key={i} id={`sw${i}`}>
+        {toks.map((tok) => (
+          <span key={tok.id} id={`sw${tok.id}`}>
             <Spinword 
-              tooltipSelected={focusedId === i}
+              tooltipSelected={focusedId === tok.id}
               t={tok} 
-              onClick={this.handleSpinwordClick.bind(this, i, tok)} 
+              onClick={this.handleSpinwordClick.bind(this, tok)} 
             />
             <ToolTip 
               active={focusedId !== null}
               position="top"
-              parent={`#sw${i}`}
+              parent={`#sw${tok.id}`}
             >
               Tooltip: {focusedId}
               <br />
