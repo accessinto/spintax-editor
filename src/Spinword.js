@@ -8,9 +8,11 @@ export default ({ tooltipSelected, t, onClick }) => {
       style={{
         backgroundColor
       }}
+      data-index={t.i}
       onClick={onClick}
+      className="sw"
     >
-      {t}
+      {t.t}
     </span>
   );
   
