@@ -8,7 +8,9 @@ export default ({ tooltipSelected, t, onClick }) => {
       style={{
         backgroundColor
       }}
-      data-index={t.i}
+      data-type={t.type}
+      data-start={t.start}
+      data-end={t.end}
       onClick={onClick}
       className="sw"
     >

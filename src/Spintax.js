@@ -33,20 +33,23 @@ class Spintax extends Component {
     //const text = sanitizeHtml(spintax);
     let m;
     let arr = [];
-    const regex = /(['\w]+|{[^{}]*})/g;
+    const r = /(['\w]+|{[^{}]*})/g;
+    const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
     const text = htmlToText.fromString(RANDOM_SPINTAX, {
       uppercaseHeadings: false,
     });
 
-    while ((m = regex.exec(text)) !== null) {
+    while ((m = r2.exec(RANDOM_SPINTAX)) !== null) {
       // console.log(m.index);
       // This is necessary to avoid infinite loops with zero-width matches
-      if (m.index === regex.lastIndex) {
-          regex.lastIndex++;
+      if (m.index === r2.lastIndex) {
+          r2.lastIndex++;
       }
       arr.push({
-        i: m.index,
-        t: m[1],
+        start: m.index,
+        end: m.index + m[0].length - 1,
+        type: m.indexOf(m[0], 1),
+        t: m[0],
       });
     }
     this.setState({ toks: arr });
@@ -142,11 +145,14 @@ class Spintax extends Component {
     }
   }
 
-  handleSpinwordClick(i) {
-    this.setState({
-      focusedId: i,
-      selObj: null,
-    })
+  handleSpinwordClick(i, tok) {
+    console.log(tok);
+    if(tok.type === 3){
+      this.setState({
+        focusedId: i,
+        selObj: null,
+      });
+    }
   }
 
   handleClickOutside(e) {
@@ -181,7 +187,7 @@ class Spintax extends Component {
             <Spinword 
               tooltipSelected={focusedId === i}
               t={tok} 
-              onClick={this.handleSpinwordClick.bind(this, i)} 
+              onClick={this.handleSpinwordClick.bind(this, i, tok)} 
             />
             <ToolTip 
               active={focusedId !== null}
