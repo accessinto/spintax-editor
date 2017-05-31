@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 var htmlToText = require('html-to-text');
 import ToolTip from 'react-portal-tooltip';
 import onClickOutside from 'react-onclickoutside';
-import { Grid, Row, Col } from 'react-flexbox-grid';
 import Spinword from './Spinword';
 import { RANDOM_SPINTAX } from './mock';
 
@@ -53,49 +52,61 @@ class Spintax extends Component {
     this.setState({ toks: arr });
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
     this.container.onselectstart = this.onSelectStart.bind(this);
-    document.addEventListener("selectionchange", this.onSelectionChange.bind(this));
+    this.container.addEventListener('mouseup', this.mouseUp.bind(this));
   }
 
-  onSelectStart() {
-    const selObj = window.getSelection();
-    this.setState({
-      focusedId: null,
-    });
-  }
-
-  onSelectionChange() {
+  mouseUp(e) {
     const selObj = window.getSelection();
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
-      //if()
       const range = selObj.getRangeAt(0);
+      const f = selObj.focusNode;
+      const fo = selObj.focusOffset;
+      const a = selObj.anchorNode;
+      const ao = selObj.anchorOffset;
       const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
-      if(selObj.anchorNode.textContent === ' ') {
-        console.log('anchor')
-        if(backwards) {
-          range.setEndBefore(selObj.anchorNode);
+      if(a.textContent === ' ' && f.textContent === ' ') {
+        if (backwards) {
+          range.setStartAfter(f);
+          range.setEndBefore(a);
         } else {
-          range.setStartAfter(selObj.anchorNode);
+          range.setStartAfter(a);
+          range.setEndBefore(f);
+        }
+      } else if(a.textContent === ' ') {
+        if (backwards) {
+          range.setStart(f, 0);
+          range.setEndBefore(a);
+        } else {
+          range.setStartAfter(a);
+          range.setEnd(f, f.textContent.length);
+        }
+      } else if(f.textContent === ' ') {
+        if (backwards) {
+          range.setStartAfter(f);
+          range.setEnd(a, a.textContent.length);
+        } else {
+          range.setStart(a, 0)
+          range.setEndBefore(f);
+        }
+      } else {
+        if(backwards) {
+          range.setStart(f, 0);
+          range.setEnd(a, a.textContent.length);
+        } else {
+          range.setStart(a, 0);
+          range.setEnd(f, f.textContent.length);
         }
       }
-      if(selObj.focusNode.textContent === ' ') {
-        console.log('focus', backwards)
-        if(backwards) {
-          range.setStartAfter(selObj.focusNode);
-        } else {
-          range.setEndBefore(selObj.focusNode);
-        }
-        //range.setEndBefore(selObj.focusNode);
-      }
-      //range.setStart(selObj.anchorNode, 0);
-      //range.setEnd(selObj.focusNode, selObj.focusNode.textContent.length);
       this.setState({
         selObj,
       });
-      //console.log(selObj.anchorNode);
-      //console.log('Anchor Offset', selObj.anchorOffset);
-      //console.log(selObj.focusNode);
-      //console.log('FocusOffset', selObj.focusOffset);
     }
+  }
+
+  onSelectStart() {
+    this.setState({
+      focusedId: null,
+    });
   }
 
   handleKeyDown(e) {
@@ -114,7 +125,8 @@ class Spintax extends Component {
     if (focusedId === 0) { return; }
     if (focusedId !== null) {
       this.setState({
-        focusedId: focusedId - 1
+        focusedId: focusedId - 1,
+        selObj: null,
       });
     }
   }
@@ -124,13 +136,24 @@ class Spintax extends Component {
     if (focusedId === toks.length - 1) { return; }
     if (focusedId !== null) {
       this.setState({
-        focusedId: focusedId + 1
+        focusedId: focusedId + 1,
+        selObj: null,
       });
     }
   }
 
+  handleSpinwordClick(i) {
+    this.setState({
+      focusedId: i,
+      selObj: null,
+    })
+  }
+
   handleClickOutside(e) {
-    console.log(e);
+    this.setState({
+      focusedId: null,
+      selObj: null,
+    })
   }
   
   render() {
@@ -147,6 +170,7 @@ class Spintax extends Component {
       }
     }
     return (
+      <div>
       <div 
         ref={(el) => this.container = el}
         className="sp" 
@@ -157,10 +181,7 @@ class Spintax extends Component {
             <Spinword 
               tooltipSelected={focusedId === i}
               t={tok} 
-              onClick={(e) => {
-                // console.log(e.nativeEvent.offsetX)
-                this.setState({ focusedId: i })
-              }} 
+              onClick={this.handleSpinwordClick.bind(this, i)} 
             />
             <ToolTip 
               active={focusedId !== null}
@@ -173,9 +194,11 @@ class Spintax extends Component {
               <br />
               Selection: {selObj ? selObj.toString() : 'N/A'}
             </ToolTip>
-            {' '}
+            <span>{' '}</span>
           </span>
         ))}
+      </div>
+      <h2>{selObj ? selObj.toString() : 'NONE'}</h2>
       </div>
     );
   }
