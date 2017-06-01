@@ -11,6 +11,8 @@ export default ({ tooltipSelected, t, onClick }) => {
       data-type={t.type}
       data-start={t.start}
       data-end={t.end}
+      data-length={t.length}
+      data-id={t.id}
       onClick={onClick}
       className="sw"
     >

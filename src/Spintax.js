@@ -22,6 +22,8 @@ function isSelectionBackwards() {
     return backwards;
 }
 
+const isNotSw = dataset => Number(dataset.type) !== 3;
+
 const findNextSw = (toks, startAt = 0) => {
   return find(toks, ['type', 3], startAt + 1);
 };
@@ -72,37 +74,61 @@ class Spintax extends Component {
   }
 
   mouseUp(e) {
+    const { toks } = this.state;
     const selObj = window.getSelection();
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
       const range = selObj.getRangeAt(0);
       const f = selObj.focusNode;
       const fo = selObj.focusOffset;
+      const fd = f.parentElement.dataset;
+      const ft = Number(fd.id);
       const a = selObj.anchorNode;
       const ao = selObj.anchorOffset;
+      const ad = a.parentElement.dataset;
+      const at = Number(ad.id);
       const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
-      if(a.textContent === ' ' && f.textContent === ' ') {
+      // debugger;
+      if(isNotSw(ad) && isNotSw(fd)) {
         if (backwards) {
-          range.setStartAfter(f);
-          range.setEndBefore(a);
+          //debugger
+          const newstart = findNextSw(toks, ft);
+          const newend = findPrevSw(toks, at);
+          const newStartNode = document.getElementById(`sw${newstart.id}`);
+          const newEndNode = document.getElementById(`sw${newend.id}`);
+          range.setStart(newStartNode, 0);
+          range.setEnd(newEndNode, 1);
         } else {
-          range.setStartAfter(a);
-          range.setEndBefore(f);
+          const newstart = findNextSw(toks, at);
+          const newend = findPrevSw(toks, ft);
+          const newStartNode = document.getElementById(`sw${newstart.id}`);
+          const newEndNode = document.getElementById(`sw${newend.id}`);
+          range.setStart(newStartNode, 0);
+          range.setEnd(newEndNode, 1);
         }
-      } else if(a.textContent === ' ') {
+      } else if(isNotSw(ad)) {
+        console.log('ad not sw');
         if (backwards) {
+          const newend = findPrevSw(toks, at);
+          const newEndNode = document.getElementById(`sw${newend.id}`);
           range.setStart(f, 0);
-          range.setEndBefore(a);
+          range.setEnd(newEndNode, 1);
         } else {
-          range.setStartAfter(a);
+          const newstart = findNextSw(toks, at);
+          const newStartNode = document.getElementById(`sw${newstart.id}`);
+          range.setStart(newStartNode, 0);
           range.setEnd(f, f.textContent.length);
         }
-      } else if(f.textContent === ' ') {
+      } else if(isNotSw(fd)) {
         if (backwards) {
-          range.setStartAfter(f);
+          const newstart = findNextSw(toks, fd);
+          const newStartNode = document.getElementById(`sw${newstart.id}`);
+          range.setStart(newStartNode, 0);
           range.setEnd(a, a.textContent.length);
         } else {
+          const newend = findPrevSw(toks, at);
+          const newEndNode = document.getElementById(`sw${newend.id}`);
           range.setStart(a, 0)
-          range.setEndBefore(f);
+          range.setEnd(newEndNode, 1);
         }
       } else {
         if(backwards) {
@@ -161,7 +187,6 @@ class Spintax extends Component {
   }
 
   handleSpinwordClick(tok) {
-    console.log(tok);
     if(tok.type === 3){
       this.setState({
         focusedId: tok.id,
@@ -215,7 +240,7 @@ class Spintax extends Component {
               <br />
               Selection: {selObj ? selObj.toString() : 'N/A'}
             </ToolTip>
-            <span>{' '}</span>
+            
           </span>
         ))}
       </div>
