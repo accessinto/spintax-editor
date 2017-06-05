@@ -18,6 +18,42 @@ const tagMatch = html => {
   return ( doc.innerHTML === html );
 };
 
+window.expand = str => {
+  let perms = window.expandH([[str, false]]);
+  while (perms.filter(o => !o[1]).length > 0) {
+    perms = window.expandH(perms);
+  }
+  console.log(perms);
+};
+
+window.expandH = ans => {
+  console.log(ans);
+  const a = [];
+  let done = false;
+  let m;
+  const regex = /{[^{}]*}/g;
+  ans.forEach(arr => {
+    const str = arr[0];
+    const done = arr[1];
+    if (!done && (m = regex.exec(str)) !== null) {
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === regex.lastIndex) {
+          regex.lastIndex++;
+      }
+      // The result can be accessed through the `m`-variable.
+      const candidates = m[0].slice(1, -1).split('|');
+      const start = m.index;
+      const end = start + m[0].length;
+      const pre = str.substring(0, start);
+      const suf = str.substring(end);
+      candidates.forEach((can) => a.push([pre + can + suf, false]));
+    } else {
+      a.push([str, true]);
+    }
+  });
+  return a
+};
+
 const bracketMatch = spintax => {
   var count = 0;
   for(var i = 0; i < spintax.length; i++) {
@@ -149,11 +185,9 @@ class Spintax extends Component {
       const html = selObj.toString();
       const o = [];
       const c = [];
-      console.log({ at, ft, html });
       const selectedToks = toks.slice(at, ft + 1);
       const oTags = selectedToks.filter(t => t.type === 2);
       const cTags = selectedToks.filter(t => t.type === 3);
-      console.log({ oTags, cTags });
       const tagExtendedAt = cTags.reduce((min, curr) => Math.min(curr.matchId, min), at);
       const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId, max), ft);
       const oBracks = selectedToks.filter(t => t.type === 5);
@@ -164,8 +198,18 @@ class Spintax extends Component {
       const finalF = document.getElementById(`sw${bracksExtendedFt}`);
       range.setStart(finalA, 0);
       range.setEnd(finalF, 1);
+      this.setState({
+        selObj
+      });
+      window.expand(selObj.toString());
     }
   }
+
+
+  expand2(str) {
+    //[str].
+  }
+
 
   onSelectStart() {
     this.setState({
@@ -261,6 +305,7 @@ class Spintax extends Component {
       <div>
       <div 
         ref={(el) => this.container = el}
+        id="sp"
         className="sp" 
         style={{ width: '1000px', minHeight: '350px' }}
       >
@@ -289,7 +334,14 @@ class Spintax extends Component {
           </span>
         ))}
       </div>
-      <h2>{selObj ? selObj.toString() : 'NONE'}</h2>
+      <ToolTip 
+        active={selObj !== null}
+        position="bottom"
+        parent="#sp"
+      >
+        Selection: {selObj ? selObj.toString() : 'N/A'}
+        <br />
+      </ToolTip>
       </div>
     );
   }
