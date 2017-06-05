@@ -1,12 +1,15 @@
 import React from 'react';
 //import classNames from 'classnames';
 
-export default ({ tooltipSelected, t, onClick }) => {
-  const backgroundColor = tooltipSelected ? 'lightblue' : 'white';
+export default ({ tooltipSelected, higlighted, t, onClick, ...rest }) => {
+  const backgroundColor = (tooltipSelected || higlighted) ? 'lightblue' : 'white';
+  const textDecoration = higlighted ? 'underline red' : 'none';
+  const fontSize = higlighted ? '200%' : '100%'
   return (
     <span 
       style={{
-        backgroundColor
+        backgroundColor,
+        textDecoration,
       }}
       data-type={t.type}
       data-start={t.start}
@@ -15,6 +18,8 @@ export default ({ tooltipSelected, t, onClick }) => {
       data-id={t.id}
       onClick={onClick}
       className="sw"
+      data-matchId={t.matchId}
+      {...rest}
     >
       {t.t}
     </span>

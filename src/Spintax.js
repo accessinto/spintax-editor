@@ -1,36 +1,45 @@
 import React, { Component } from 'react';
 import find from 'lodash/find';
 import findLast from 'lodash/findLast';
+import slice from 'lodash/slice';
 var htmlToText = require('html-to-text');
 import ToolTip from 'react-portal-tooltip';
 import onClickOutside from 'react-onclickoutside';
+var htmlParser = require('html-parser');
 import Spinword from './Spinword';
 import { RANDOM_SPINTAX } from './mock';
 
-function isSelectionBackwards() {
-    var backwards = false;
-    if (window.getSelection) {
-        var sel = window.getSelection();
-        if (!sel.isCollapsed) {
-            var range = document.createRange();
-            range.setStart(sel.anchorNode, sel.anchorOffset);
-            range.setEnd(sel.focusNode, sel.focusOffset);
-            backwards = range.collapsed;
-            range.detach();
-        }
-    }
-    return backwards;
-}
+const tagMatch = html => {
+  var doc = document.createElement('div');
+  doc.innerHTML = html;
+  if(doc.innerHTML !== html) {
+    console.error(`Tag Mismatch, Original Html is ${html}`);
+  }
+  return ( doc.innerHTML === html );
+};
 
-const isNotSw = dataset => Number(dataset.type) !== 3;
+const bracketMatch = spintax => {
+  var count = 0;
+  for(var i = 0; i < spintax.length; i++) {
+    if(spintax[i] === '{') { count++; }
+    else if(spintax[i] === '}') { count--; }
+    if(count < 0) break;
+  }
+  if(count > 0) {
+    console.error(`Bracket Mismatch, You'll find stuff on ur RIGHT, count is ${count}`);
+  } else if(count < 0) {
+    console.error(`Bracket Mismatch, You'll find stuff on ur LEFT, count is ${count}`);
+  }
+  return (count === 0);
+};
 
 const findNextSw = (toks, startAt = 0) => {
-  return find(toks, ['type', 3], startAt + 1);
+  return find(toks, ['type', 4], startAt + 1);
 };
 
 const findPrevSw = (toks, startsAt = toks.length - 1) => {
-  return findLast(toks, ['type', 3], startsAt - 1);
-}
+  return findLast(toks, ['type', 4], startsAt - 1);
+};
 
 class Spintax extends Component {
   
@@ -38,6 +47,7 @@ class Spintax extends Component {
     focusedId: null,
     toks: [],
     selObj: '',
+    highlightedId: null,
   }
 
   componentDidMount() {
@@ -47,101 +57,113 @@ class Spintax extends Component {
     let arr = [];
     const r = /(['\w]+|{[^{}]*})/g;
     const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-    const text = htmlToText.fromString(RANDOM_SPINTAX, {
-      uppercaseHeadings: false,
-    });
+    const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
+    const r4 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|({)|(})|(\|)|([^\w\s])/g;
+    //1: whitespace
+    //2: opening tag
+    //3: closing tag
+    //4: SW
+    //5: Opening Brack
+    //6: Closing Brack
+    //7: Pipe
+    //8: Punctuation
     let idGen = 0;
-
-    while ((m = r2.exec(RANDOM_SPINTAX)) !== null) {
+    const s = [];
+    const b = [];
+    while ((m = r4.exec(RANDOM_SPINTAX)) !== null) {
       // console.log(m.index);
       // This is necessary to avoid infinite loops with zero-width matches
-      if (m.index === r2.lastIndex) {
-          r2.lastIndex++;
+      if (m.index === r4.lastIndex) {
+          r4.lastIndex++;
       }
-      arr.push({
-        id: idGen++, 
+      const id = idGen++;
+      const type = m.indexOf(m[0], 1);
+      let obj = {
+        id, 
         start: m.index,
         length: m[0].length,
-        end: m.index + m[0].length - 1,
+        end: m.index + m[0].length,
         type: m.indexOf(m[0], 1),
         t: m[0],
-      });
+      }
+      if(type === 2) {
+        s.push(id);
+      }
+      if(type === 5) {
+        b.push(id);
+      }
+      if(type === 7) {
+        const matchId = b[b.length - 1];
+        obj = Object.assign({
+          matchId
+        }, obj);
+      }
+      if(type === 3) {
+        const matchId = s.pop();
+        arr[matchId] = Object.assign({
+          matchId: id,
+        }, arr[matchId]);
+        obj = Object.assign({
+          matchId,
+        }, obj)
+      }
+      if(type === 6) {
+        const matchId = b.pop();
+        arr[matchId] = Object.assign({
+          matchId: id,
+        }, arr[matchId]);
+        obj = Object.assign({
+          matchId
+        }, obj);
+      }
+      arr.push(obj);
     }
     this.setState({ toks: arr });
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
     this.container.onselectstart = this.onSelectStart.bind(this);
-    this.container.addEventListener('mouseup', this.mouseUp.bind(this));
+    this.container.addEventListener('mouseup', this.mouseUp2.bind(this));
   }
 
-  mouseUp(e) {
+
+  mouseUp2(e) {
     const { toks } = this.state;
     const selObj = window.getSelection();
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
+      const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
       const range = selObj.getRangeAt(0);
       const f = selObj.focusNode;
-      const fo = selObj.focusOffset;
-      const fd = f.parentElement.dataset;
-      const ft = Number(fd.id);
       const a = selObj.anchorNode;
-      const ao = selObj.anchorOffset;
-      const ad = a.parentElement.dataset;
-      const at = Number(ad.id);
-      const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
-      // debugger;
-      if(isNotSw(ad) && isNotSw(fd)) {
-        if (backwards) {
-          //debugger
-          const newstart = findNextSw(toks, ft);
-          const newend = findPrevSw(toks, at);
-          const newStartNode = document.getElementById(`sw${newstart.id}`);
-          const newEndNode = document.getElementById(`sw${newend.id}`);
-          range.setStart(newStartNode, 0);
-          range.setEnd(newEndNode, 1);
-        } else {
-          const newstart = findNextSw(toks, at);
-          const newend = findPrevSw(toks, ft);
-          const newStartNode = document.getElementById(`sw${newstart.id}`);
-          const newEndNode = document.getElementById(`sw${newend.id}`);
-          range.setStart(newStartNode, 0);
-          range.setEnd(newEndNode, 1);
-        }
-      } else if(isNotSw(ad)) {
-        console.log('ad not sw');
-        if (backwards) {
-          const newend = findPrevSw(toks, at);
-          const newEndNode = document.getElementById(`sw${newend.id}`);
-          range.setStart(f, 0);
-          range.setEnd(newEndNode, 1);
-        } else {
-          const newstart = findNextSw(toks, at);
-          const newStartNode = document.getElementById(`sw${newstart.id}`);
-          range.setStart(newStartNode, 0);
-          range.setEnd(f, f.textContent.length);
-        }
-      } else if(isNotSw(fd)) {
-        if (backwards) {
-          const newstart = findNextSw(toks, fd);
-          const newStartNode = document.getElementById(`sw${newstart.id}`);
-          range.setStart(newStartNode, 0);
-          range.setEnd(a, a.textContent.length);
-        } else {
-          const newend = findPrevSw(toks, at);
-          const newEndNode = document.getElementById(`sw${newend.id}`);
-          range.setStart(a, 0)
-          range.setEnd(newEndNode, 1);
-        }
+      if(backwards) {
+        range.setStart(f, 0);
+        range.setEnd(a, a.textContent.length)
       } else {
-        if(backwards) {
-          range.setStart(f, 0);
-          range.setEnd(a, a.textContent.length);
-        } else {
-          range.setStart(a, 0);
-          range.setEnd(f, f.textContent.length);
-        }
+        range.setStart(a, 0);
+        range.setEnd(f, f.textContent.length);
       }
-      this.setState({
-        selObj,
-      });
+      const newf = selObj.focusNode;
+      const newa = selObj.anchorNode;
+      const fd = newf.parentElement.dataset;
+      const ft = Number(fd.id);
+      const ad = newa.parentElement.dataset;
+      const at = Number(ad.id);
+      const html = selObj.toString();
+      const o = [];
+      const c = [];
+      console.log({ at, ft, html });
+      const selectedToks = toks.slice(at, ft + 1);
+      const oTags = selectedToks.filter(t => t.type === 2);
+      const cTags = selectedToks.filter(t => t.type === 3);
+      console.log({ oTags, cTags });
+      const tagExtendedAt = cTags.reduce((min, curr) => Math.min(curr.matchId, min), at);
+      const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId, max), ft);
+      const oBracks = selectedToks.filter(t => t.type === 5);
+      const cBracks = selectedToks.filter(t => t.type === 6);
+      const bracksExtendedAt = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), tagExtendedAt);
+      const bracksExtendedFt = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), tagExtendedFt);
+      const finalA = document.getElementById(`sw${bracksExtendedAt}`);
+      const finalF = document.getElementById(`sw${bracksExtendedFt}`);
+      range.setStart(finalA, 0);
+      range.setEnd(finalF, 1);
     }
   }
 
@@ -187,7 +209,7 @@ class Spintax extends Component {
   }
 
   handleSpinwordClick(tok) {
-    if(tok.type === 3){
+    if(tok.type === 4){
       this.setState({
         focusedId: tok.id,
         selObj: null,
@@ -201,9 +223,29 @@ class Spintax extends Component {
       selObj: null,
     })
   }
+
+  onMouseEnter(tok) {
+    if(tok.type === 5) {
+      this.setState({
+        highlightedId: tok.id
+      })
+    } else if (tok.type === 6 || tok.type === 7) {
+      this.setState({
+        highlightedId: tok.matchId
+      })
+    }
+  }
+
+  onMouseLeave(tok) {
+    if(tok.type === 5 || tok.type === 6 || tok.type === 7) {
+      this.setState({
+        highlightedId: null
+      })
+    }
+  }
   
   render() {
-    const { focusedId, toks, selObj } = this.state;
+    const { focusedId, toks, selObj, highlightedId } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
     if (selectedToken) {
@@ -220,13 +262,16 @@ class Spintax extends Component {
       <div 
         ref={(el) => this.container = el}
         className="sp" 
-        style={{ width: '500px', minHeight: '350px' }}
+        style={{ width: '1000px', minHeight: '350px' }}
       >
         {toks.map((tok) => (
           <span key={tok.id} id={`sw${tok.id}`}>
             <Spinword 
               tooltipSelected={focusedId === tok.id}
+              higlighted={highlightedId === tok.id || highlightedId === tok.matchId}
               t={tok} 
+              onMouseOver={this.onMouseEnter.bind(this, tok)}
+              onMouseOut={this.onMouseLeave.bind(this, tok)}
               onClick={this.handleSpinwordClick.bind(this, tok)} 
             />
             <ToolTip 

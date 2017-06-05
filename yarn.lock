@@ -2385,6 +2385,10 @@ html-minifier@^3.1.0:
     relateurl "0.2.x"
     uglify-js "3.0.x"
 
+html-parser@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/html-parser/-/html-parser-0.10.0.tgz#2a44b2b55f431f8243e7476c2ec3dd0b6307cf7c"
+
 html-to-text@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/html-to-text/-/html-to-text-3.3.0.tgz#6a9b63c699b885bb7ba84b1446bfe6876bbfcfb7"
@@ -5305,6 +5309,10 @@ xml-char-classes@^1.0.0:
 xml-name-validator@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/xml-name-validator/-/xml-name-validator-2.0.1.tgz#4d8b8f1eccd3419aa362061becef515e1e559635"
+
+xregexp@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/xregexp/-/xregexp-3.2.0.tgz#cb3601987bfe2695b584000c18f1c4a8c322878e"
 
 "xtend@>=4.0.0 <4.1.0-0", xtend@^4.0.0:
   version "4.0.1"
