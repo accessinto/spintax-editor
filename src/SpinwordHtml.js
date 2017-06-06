@@ -4,12 +4,13 @@ import React from 'react';
 export default ({ tooltipSelected, higlighted, t, onClick, ...rest }) => {
   const backgroundColor = (tooltipSelected || higlighted) ? 'lightblue' : 'white';
   const textDecoration = higlighted ? 'underline red' : 'none';
-  const fontSize = higlighted ? '200%' : '100%'
+  const fontSize = higlighted ? '200%' : '100%';
   return (
     <span 
       style={{
         backgroundColor,
         textDecoration,
+        fontSize,
       }}
       data-type={t.type}
       data-start={t.start}
@@ -19,7 +20,7 @@ export default ({ tooltipSelected, higlighted, t, onClick, ...rest }) => {
       onClick={onClick}
       className="sw"
       data-matchId={t.matchId}
-	  dangerouslySetInnerHTML={{ __html: t.t }}
+      dangerouslySetInnerHTML={{ __html: t.t }}
       {...rest}
     />
   );

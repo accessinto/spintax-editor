@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import find from 'lodash/find';
 import findLast from 'lodash/findLast';
 import uniq from 'lodash/uniq';
 import flatten from 'lodash/flatten';
-var htmlToText = require('html-to-text');
 import ToolTip from 'react-portal-tooltip';
+import QTip from './QTip';
 import onClickOutside from 'react-onclickoutside';
-var htmlParser = require('html-parser');
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
-import { RANDOM_SPINTAX3 } from './mock';
+
 
 const tagMatch = html => {
   var doc = document.createElement('div');
@@ -87,13 +87,12 @@ class Spintax extends Component {
   }
 
   componentDidMount() {
-    //console.log(htmlToText);
-    //const text = sanitizeHtml(spintax);
+    const { spintax } = this.props;
     let m;
     let arr = [];
-    const r = /(['\w]+|{[^{}]*})/g;
-    const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-    const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
+    //const r = /(['\w]+|{[^{}]*})/g;
+    //const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
+    //const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
     const r4 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|({)|(})|(\|)|([^\w\s])/g;
     //1: whitespace
     //2: opening tag
@@ -106,7 +105,7 @@ class Spintax extends Component {
     let idGen = 0;
     const s = [];
     const b = [];
-    while ((m = r4.exec(RANDOM_SPINTAX3)) !== null) {
+    while ((m = r4.exec(spintax)) !== null) {
       // console.log(m.index);
       // This is necessary to avoid infinite loops with zero-width matches
       if (m.index === r4.lastIndex) {
@@ -160,6 +159,76 @@ class Spintax extends Component {
     this.container.addEventListener('mouseup', this.mouseUp2.bind(this));
   }
 
+  componentWillReceiveProps(newProps) {
+    console.log('asd');
+    const { spintax } = newProps;
+    let m;
+    let arr = [];
+    //const r = /(['\w]+|{[^{}]*})/g;
+    //const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
+    //const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
+    const r4 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|({)|(})|(\|)|([^\w\s])/g;
+    //1: whitespace
+    //2: opening tag
+    //3: closing tag
+    //4: SW
+    //5: Opening Brack
+    //6: Closing Brack
+    //7: Pipe
+    //8: Punctuation
+    let idGen = 0;
+    const s = [];
+    const b = [];
+    while ((m = r4.exec(spintax)) !== null) {
+      // console.log(m.index);
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === r4.lastIndex) {
+          r4.lastIndex++;
+      }
+      const id = idGen++;
+      const type = m.indexOf(m[0], 1);
+      let obj = {
+        id, 
+        start: m.index,
+        length: m[0].length,
+        end: m.index + m[0].length,
+        type: m.indexOf(m[0], 1),
+        t: m[0],
+      }
+      if(type === 2) {
+        s.push(id);
+      }
+      if(type === 5) {
+        b.push(id);
+      }
+      if(type === 7) {
+        const matchId = b[b.length - 1];
+        obj = Object.assign({
+          matchId
+        }, obj);
+      }
+      if(type === 3) {
+        const matchId = s.pop();
+        arr[matchId] = Object.assign({
+          matchId: id,
+        }, arr[matchId]);
+        obj = Object.assign({
+          matchId,
+        }, obj)
+      }
+      if(type === 6) {
+        const matchId = b.pop();
+        arr[matchId] = Object.assign({
+          matchId: id,
+        }, arr[matchId]);
+        obj = Object.assign({
+          matchId
+        }, obj);
+      }
+      arr.push(obj);
+    }
+    this.setState({ toks: arr });
+  }
 
   mouseUp2(e) {
     const { toks } = this.state;
@@ -290,7 +359,23 @@ class Spintax extends Component {
       })
     }
   }
-  
+
+  getSynsofFocusedId() {
+    const { focusedId, toks } = this.state;
+    const str = toks[focusedId].t;
+    if(str.startsWith('{') && str.endsWith('}')) {
+      console.log(str.slice(1, -1).split('|').map((syn) => ({ content: syn, selected: true })));
+      return str.slice(1, -1).split('|').map((syn) => ({ content: syn, selected: true }));
+    }
+    return [str].map((syn) => ({ content: syn, selected: true }));
+  }
+
+  //syns, goHandler, textBeforeHandler, textAfterHandler, previousHandler, nextHandler
+
+  goHandler(replacement) {
+    console.log(replacement);
+  }
+
   render() {
     const { focusedId, toks, selObj, highlightedId, richTextMode } = this.state;
     let syns = [];
@@ -315,18 +400,6 @@ class Spintax extends Component {
             onMouseOut={this.onMouseLeave.bind(this, tok)}
             onClick={this.handleSpinwordClick.bind(this, tok)} 
           />
-          <ToolTip 
-            active={focusedId !== null}
-            position="top"
-            parent={`#sw${tok.id}`}
-          >
-            Tooltip: {focusedId}
-            <br />
-            Options: {syns.toString()}
-            <br />
-            Selection: {selObj ? selObj.toString() : 'N/A'}
-          </ToolTip>
-          
         </span>
       ))
     );
@@ -342,18 +415,6 @@ class Spintax extends Component {
             onMouseOut={this.onMouseLeave.bind(this, tok)}
             onClick={this.handleSpinwordClick.bind(this, tok)} 
           />
-          <ToolTip 
-            active={focusedId !== null}
-            position="top"
-            parent={`#sw${tok.id}`}
-          >
-            Tooltip: {focusedId}
-            <br />
-            Options: {syns.toString()}
-            <br />
-            Selection: {selObj ? selObj.toString() : 'N/A'}
-          </ToolTip>
-          
         </span>
       ))
     );
@@ -370,6 +431,13 @@ class Spintax extends Component {
       >
         { richTextMode ? richTextRenderer : plainTextRenderer }
       </div>
+      {focusedId 
+      && 
+      <QTip 
+        /*syns, goHandler, textBeforeHandler, textAfterHandler, previousHandler, nextHandler */
+        syns={this.getSynsofFocusedId()}
+        goHandler={this.goHandler.bind(this)}
+      />}
       <ToolTip 
         active={selObj !== null}
         position="bottom"
@@ -383,4 +451,8 @@ class Spintax extends Component {
   }
 }
 
-export default onClickOutside(Spintax);
+const mapStateToProps = ({ spintax }) => ({
+  spintax
+});
+
+export default connect(mapStateToProps)(onClickOutside(Spintax));
