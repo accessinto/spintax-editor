@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
 import find from 'lodash/find';
 import findLast from 'lodash/findLast';
-import slice from 'lodash/slice';
+import uniq from 'lodash/uniq';
+import flatten from 'lodash/flatten';
 var htmlToText = require('html-to-text');
 import ToolTip from 'react-portal-tooltip';
 import onClickOutside from 'react-onclickoutside';
 var htmlParser = require('html-parser');
 import Spinword from './Spinword';
-import { RANDOM_SPINTAX } from './mock';
+import SpinwordHtml from './SpinwordHtml';
+import { RANDOM_SPINTAX3 } from './mock';
 
 const tagMatch = html => {
   var doc = document.createElement('div');
@@ -18,41 +20,38 @@ const tagMatch = html => {
   return ( doc.innerHTML === html );
 };
 
-window.expand = str => {
-  let perms = window.expandH([[str, false]]);
-  while (perms.filter(o => !o[1]).length > 0) {
-    perms = window.expandH(perms);
-  }
-  console.log(perms);
+window.expand2 = str => {
+  const res = window.expandH2([str]);
+  if(!res) return [str, ''];
+  return res;
 };
 
-window.expandH = ans => {
-  console.log(ans);
-  const a = [];
-  let done = false;
-  let m;
+window.expandH2 = arr => {
+  if(arr.length > 9) {
+    return false;
+  }
   const regex = /{[^{}]*}/g;
-  ans.forEach(arr => {
-    const str = arr[0];
-    const done = arr[1];
-    if (!done && (m = regex.exec(str)) !== null) {
-      // This is necessary to avoid infinite loops with zero-width matches
-      if (m.index === regex.lastIndex) {
-          regex.lastIndex++;
-      }
-      // The result can be accessed through the `m`-variable.
+  let allDone = true;
+  const perms = [];
+  arr.forEach((s, i) => {
+    let m;
+    if ((m = regex.exec(s)) !== null) {
+      regex.lastIndex = 0;
+      allDone = false;
       const candidates = m[0].slice(1, -1).split('|');
       const start = m.index;
       const end = start + m[0].length;
-      const pre = str.substring(0, start);
-      const suf = str.substring(end);
-      candidates.forEach((can) => a.push([pre + can + suf, false]));
-    } else {
-      a.push([str, true]);
+      const pre = s.substring(0, start);
+      const suf = s.substring(end);
+      perms.push(candidates.map((can) => pre + can + suf));
     }
   });
-  return a
-};
+  if(allDone) {
+    return arr;
+  } else {
+    return window.expandH2(uniq(flatten(perms)));
+  }
+}
 
 const bracketMatch = spintax => {
   var count = 0;
@@ -84,6 +83,7 @@ class Spintax extends Component {
     toks: [],
     selObj: '',
     highlightedId: null,
+    richTextMode: false,
   }
 
   componentDidMount() {
@@ -106,7 +106,7 @@ class Spintax extends Component {
     let idGen = 0;
     const s = [];
     const b = [];
-    while ((m = r4.exec(RANDOM_SPINTAX)) !== null) {
+    while ((m = r4.exec(RANDOM_SPINTAX3)) !== null) {
       // console.log(m.index);
       // This is necessary to avoid infinite loops with zero-width matches
       if (m.index === r4.lastIndex) {
@@ -165,6 +165,7 @@ class Spintax extends Component {
     const { toks } = this.state;
     const selObj = window.getSelection();
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
+      //debugger;
       const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
       const range = selObj.getRangeAt(0);
       const f = selObj.focusNode;
@@ -178,18 +179,26 @@ class Spintax extends Component {
       }
       const newf = selObj.focusNode;
       const newa = selObj.anchorNode;
-      const fd = newf.parentElement.dataset;
+      let fd, ad;
+      if(newf.dataset) {
+        fd = newf.dataset;
+      } else {
+        fd = newf.parentElement.dataset;
+      }
+      if(newa.dataset) {
+        ad = newa.dataset;
+      } else {
+        ad = newa.parentElement.dataset;
+      }
       const ft = Number(fd.id);
-      const ad = newa.parentElement.dataset;
       const at = Number(ad.id);
-      const html = selObj.toString();
       const o = [];
       const c = [];
       const selectedToks = toks.slice(at, ft + 1);
       const oTags = selectedToks.filter(t => t.type === 2);
       const cTags = selectedToks.filter(t => t.type === 3);
-      const tagExtendedAt = cTags.reduce((min, curr) => Math.min(curr.matchId, min), at);
-      const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId, max), ft);
+      const tagExtendedAt = cTags.reduce((min, curr) => Math.min(curr.matchId || curr.id, min), at);
+      const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId || curr.id, max), ft);
       const oBracks = selectedToks.filter(t => t.type === 5);
       const cBracks = selectedToks.filter(t => t.type === 6);
       const bracksExtendedAt = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), tagExtendedAt);
@@ -201,15 +210,9 @@ class Spintax extends Component {
       this.setState({
         selObj
       });
-      window.expand(selObj.toString());
+      console.log(window.expand2(selObj.toString()));
     }
   }
-
-
-  expand2(str) {
-    //[str].
-  }
-
 
   onSelectStart() {
     this.setState({
@@ -289,7 +292,7 @@ class Spintax extends Component {
   }
   
   render() {
-    const { focusedId, toks, selObj, highlightedId } = this.state;
+    const { focusedId, toks, selObj, highlightedId, richTextMode } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
     if (selectedToken) {
@@ -301,38 +304,71 @@ class Spintax extends Component {
         syns = [option];
       }
     }
+    const plainTextRenderer = (
+      toks.map((tok) => (
+        <span key={tok.id} id={`sw${tok.id}`}>
+          <Spinword 
+            tooltipSelected={focusedId === tok.id}
+            higlighted={highlightedId === tok.id || highlightedId === tok.matchId}
+            t={tok} 
+            onMouseOver={this.onMouseEnter.bind(this, tok)}
+            onMouseOut={this.onMouseLeave.bind(this, tok)}
+            onClick={this.handleSpinwordClick.bind(this, tok)} 
+          />
+          <ToolTip 
+            active={focusedId !== null}
+            position="top"
+            parent={`#sw${tok.id}`}
+          >
+            Tooltip: {focusedId}
+            <br />
+            Options: {syns.toString()}
+            <br />
+            Selection: {selObj ? selObj.toString() : 'N/A'}
+          </ToolTip>
+          
+        </span>
+      ))
+    );
+
+    const richTextRenderer = (
+      toks.map((tok) => (
+        <span key={tok.id} id={`sw${tok.id}`}>
+          <SpinwordHtml 
+            tooltipSelected={focusedId === tok.id}
+            higlighted={highlightedId === tok.id || highlightedId === tok.matchId}
+            t={tok} 
+            onMouseOver={this.onMouseEnter.bind(this, tok)}
+            onMouseOut={this.onMouseLeave.bind(this, tok)}
+            onClick={this.handleSpinwordClick.bind(this, tok)} 
+          />
+          <ToolTip 
+            active={focusedId !== null}
+            position="top"
+            parent={`#sw${tok.id}`}
+          >
+            Tooltip: {focusedId}
+            <br />
+            Options: {syns.toString()}
+            <br />
+            Selection: {selObj ? selObj.toString() : 'N/A'}
+          </ToolTip>
+          
+        </span>
+      ))
+    );
     return (
       <div>
+        <button onClick={() => this.setState({ richTextMode: !richTextMode })}>
+          { richTextMode ? 'Plain' : 'Rich Text' }
+        </button>
       <div 
         ref={(el) => this.container = el}
         id="sp"
         className="sp" 
         style={{ width: '1000px', minHeight: '350px' }}
       >
-        {toks.map((tok) => (
-          <span key={tok.id} id={`sw${tok.id}`}>
-            <Spinword 
-              tooltipSelected={focusedId === tok.id}
-              higlighted={highlightedId === tok.id || highlightedId === tok.matchId}
-              t={tok} 
-              onMouseOver={this.onMouseEnter.bind(this, tok)}
-              onMouseOut={this.onMouseLeave.bind(this, tok)}
-              onClick={this.handleSpinwordClick.bind(this, tok)} 
-            />
-            <ToolTip 
-              active={focusedId !== null}
-              position="top"
-              parent={`#sw${tok.id}`}
-            >
-              Tooltip: {focusedId}
-              <br />
-              Options: {syns.toString()}
-              <br />
-              Selection: {selObj ? selObj.toString() : 'N/A'}
-            </ToolTip>
-            
-          </span>
-        ))}
+        { richTextMode ? richTextRenderer : plainTextRenderer }
       </div>
       <ToolTip 
         active={selObj !== null}
