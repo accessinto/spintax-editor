@@ -10,6 +10,7 @@ import onClickOutside from 'react-onclickoutside';
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
 
+import { setFocusId, resetFocusId } from '../actions/EditorActions';
 
 const tagMatch = html => {
   var doc = document.createElement('div');
@@ -87,151 +88,18 @@ class Spintax extends Component {
   }
 
   componentDidMount() {
-    const { spintax } = this.props;
-    let m;
-    let arr = [];
-    //const r = /(['\w]+|{[^{}]*})/g;
-    //const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-    //const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-    const r4 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|({)|(})|(\|)|([^\w\s])/g;
-    //1: whitespace
-    //2: opening tag
-    //3: closing tag
-    //4: SW
-    //5: Opening Brack
-    //6: Closing Brack
-    //7: Pipe
-    //8: Punctuation
-    let idGen = 0;
-    const s = [];
-    const b = [];
-    while ((m = r4.exec(spintax)) !== null) {
-      // console.log(m.index);
-      // This is necessary to avoid infinite loops with zero-width matches
-      if (m.index === r4.lastIndex) {
-          r4.lastIndex++;
-      }
-      const id = idGen++;
-      const type = m.indexOf(m[0], 1);
-      let obj = {
-        id, 
-        start: m.index,
-        length: m[0].length,
-        end: m.index + m[0].length,
-        type: m.indexOf(m[0], 1),
-        t: m[0],
-      }
-      if(type === 2) {
-        s.push(id);
-      }
-      if(type === 5) {
-        b.push(id);
-      }
-      if(type === 7) {
-        const matchId = b[b.length - 1];
-        obj = Object.assign({
-          matchId
-        }, obj);
-      }
-      if(type === 3) {
-        const matchId = s.pop();
-        arr[matchId] = Object.assign({
-          matchId: id,
-        }, arr[matchId]);
-        obj = Object.assign({
-          matchId,
-        }, obj)
-      }
-      if(type === 6) {
-        const matchId = b.pop();
-        arr[matchId] = Object.assign({
-          matchId: id,
-        }, arr[matchId]);
-        obj = Object.assign({
-          matchId
-        }, obj);
-      }
-      arr.push(obj);
-    }
-    this.setState({ toks: arr });
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
     this.container.onselectstart = this.onSelectStart.bind(this);
     this.container.addEventListener('mouseup', this.mouseUp2.bind(this));
   }
 
-  componentWillReceiveProps(newProps) {
-    console.log('asd');
-    const { spintax } = newProps;
-    let m;
-    let arr = [];
-    //const r = /(['\w]+|{[^{}]*})/g;
-    //const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-    //const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-    const r4 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|({)|(})|(\|)|([^\w\s])/g;
-    //1: whitespace
-    //2: opening tag
-    //3: closing tag
-    //4: SW
-    //5: Opening Brack
-    //6: Closing Brack
-    //7: Pipe
-    //8: Punctuation
-    let idGen = 0;
-    const s = [];
-    const b = [];
-    while ((m = r4.exec(spintax)) !== null) {
-      // console.log(m.index);
-      // This is necessary to avoid infinite loops with zero-width matches
-      if (m.index === r4.lastIndex) {
-          r4.lastIndex++;
-      }
-      const id = idGen++;
-      const type = m.indexOf(m[0], 1);
-      let obj = {
-        id, 
-        start: m.index,
-        length: m[0].length,
-        end: m.index + m[0].length,
-        type: m.indexOf(m[0], 1),
-        t: m[0],
-      }
-      if(type === 2) {
-        s.push(id);
-      }
-      if(type === 5) {
-        b.push(id);
-      }
-      if(type === 7) {
-        const matchId = b[b.length - 1];
-        obj = Object.assign({
-          matchId
-        }, obj);
-      }
-      if(type === 3) {
-        const matchId = s.pop();
-        arr[matchId] = Object.assign({
-          matchId: id,
-        }, arr[matchId]);
-        obj = Object.assign({
-          matchId,
-        }, obj)
-      }
-      if(type === 6) {
-        const matchId = b.pop();
-        arr[matchId] = Object.assign({
-          matchId: id,
-        }, arr[matchId]);
-        obj = Object.assign({
-          matchId
-        }, obj);
-      }
-      arr.push(obj);
-    }
-    this.setState({ toks: arr });
+  componentWillReceiveProps(nextProps) {
+    // console.log('cwr');
   }
+  
 
   mouseUp2(e) {
-    const { toks } = this.state;
+    const { toks } = this.props;
     const selObj = window.getSelection();
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
       //debugger;
@@ -290,9 +158,6 @@ class Spintax extends Component {
   }
 
   handleKeyDown(e) {
-    this.setState({
-      selObj: null,
-    });
     if(e.key === 'ArrowRight') {
       this.handleRight();
     } else if(e.key === 'ArrowLeft') {
@@ -301,41 +166,41 @@ class Spintax extends Component {
   }
 
   handleLeft() {
-    const { toks, focusedId } = this.state;
+    const { focusedId, toks } = this.props;
     if (focusedId === 0) { return; }
     const prevFoc = findPrevSw(toks, focusedId);
     if (focusedId !== null && prevFoc) {
-      this.setState({
-        focusedId: prevFoc.id,
+      this.props.setFocusId(prevFoc.id);
+      return {
         selObj: null,
-      });
-    }
+      };
+    } else return;
   }
 
   handleRight() {
-    const { focusedId, toks } = this.state;
+    const { focusedId, toks } = this.props;
     if (focusedId === toks.length - 1) { return; }
     const nextFoc = findNextSw(toks, focusedId);
     if (focusedId !== null && nextFoc) {
-      this.setState({
-        focusedId: nextFoc.id,
+      this.props.setFocusId(nextFoc.id);
+      return {
         selObj: null,
-      });
-    }
+      };
+    } else return;
   }
 
   handleSpinwordClick(tok) {
     if(tok.type === 4){
+      this.props.setFocusId(tok.id);
       this.setState({
-        focusedId: tok.id,
         selObj: null,
       });
     }
   }
 
   handleClickOutside(e) {
+    this.props.resetFocusId();
     this.setState({
-      focusedId: null,
       selObj: null,
     })
   }
@@ -360,24 +225,25 @@ class Spintax extends Component {
     }
   }
 
-  getSynsofFocusedId() {
-    const { focusedId, toks } = this.state;
-    const str = toks[focusedId].t;
-    if(str.startsWith('{') && str.endsWith('}')) {
-      console.log(str.slice(1, -1).split('|').map((syn) => ({ content: syn, selected: true })));
-      return str.slice(1, -1).split('|').map((syn) => ({ content: syn, selected: true }));
-    }
-    return [str].map((syn) => ({ content: syn, selected: true }));
-  }
-
   //syns, goHandler, textBeforeHandler, textAfterHandler, previousHandler, nextHandler
-
   goHandler(replacement) {
+    const { toks } = this.props;
+    const { focusedId } = this.state;
+    const item = toks[focusedId];
+    const replacementItem = Object.assign({}, item, { t: replacement });
+    this.props.dispatch({
+      type: 'GO',
+      payload: {
+        replacement: replacementItem,
+        index: focusedId,
+      }
+    });
     console.log(replacement);
   }
 
   render() {
-    const { focusedId, toks, selObj, highlightedId, richTextMode } = this.state;
+    const { toks, focusedId } = this.props;
+    const { selObj, highlightedId, richTextMode } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
     if (selectedToken) {
@@ -434,9 +300,10 @@ class Spintax extends Component {
       {focusedId 
       && 
       <QTip 
-        /*syns, goHandler, textBeforeHandler, textAfterHandler, previousHandler, nextHandler */
-        syns={this.getSynsofFocusedId()}
-        goHandler={this.goHandler.bind(this)}
+        prevHandler={this.handleLeft.bind(this)}
+        nextHandler={this.handleRight.bind(this)}
+        prevDisabled={!findPrevSw(toks, focusedId)}
+        nextDisabled={!findNextSw(toks, focusedId)}
       />}
       <ToolTip 
         active={selObj !== null}
@@ -452,7 +319,11 @@ class Spintax extends Component {
 }
 
 const mapStateToProps = ({ spintax }) => ({
-  spintax
+  toks: spintax.toks,
+  focusedId: spintax.focusedId
 });
 
-export default connect(mapStateToProps)(onClickOutside(Spintax));
+export default connect(mapStateToProps, {
+  setFocusId,
+  resetFocusId,
+})(onClickOutside(Spintax));

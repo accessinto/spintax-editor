@@ -6,7 +6,6 @@ import { RANDOM_SPINTAX3 } from './mock';
 class SpintaxContainer extends Component {
 
   componentWillMount () {
-    console.log(this.props);
     this.props.dispatch({
       type: 'LOAD',
       payload: RANDOM_SPINTAX3,
