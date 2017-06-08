@@ -6,11 +6,11 @@ import uniq from 'lodash/uniq';
 import flatten from 'lodash/flatten';
 // import ToolTip from 'react-portal-tooltip';
 import QTip from './QTip';
-import onClickOutside from 'react-onclickoutside';
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
 import ToolTip from './Tooltip';
 
+import { toggleSyn } from '../actions/SynsActions';
 import { setFocusId, resetFocusId } from '../actions/EditorActions';
 
 const tagMatch = html => {
@@ -90,7 +90,7 @@ class Spintax extends Component {
 
   componentDidMount() {
     //document.keydown = this.handleKeyDown.bind(this)
-    //document.addEventListener("keydown", this.handleKeyDown.bind(this));
+    document.addEventListener("keydown", this.handleKeyDown.bind(this));
     this.container.addEventListener('mouseup', this.mouseUp2.bind(this));
   }
 
@@ -104,8 +104,13 @@ class Spintax extends Component {
   
 
   mouseUp2(e) {
+    console.log('mouse up')
     const { toks } = this.props;
     const selObj = window.getSelection();
+    if(selObj.anchorNode.isSameNode(selObj.focusNode)) {
+      console.log('SAME NODE');
+      console.log(selObj.anchorNode);
+    }
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
       //debugger;
       const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
@@ -157,12 +162,24 @@ class Spintax extends Component {
   }
 
   handleKeyDown(e) {
-    console.log(e.target);
-    console.log(document.activeElement);
-    if(e.key === 'ArrowRight') {
-      this.handleRight();
-    } else if(e.key === 'ArrowLeft') {
-      this.handleLeft();
+    const { toks, focusedId } = this.props;
+    if(e.altKey) {
+      if(e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleRight();
+      } else if(e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleLeft();
+      } else if(Number(e.key)) {
+        const num = Number(e.key);
+        e.preventDefault();
+        e.stopPropagation();
+        if(num >= 1 && num <= toks[focusedId].syns.length) {
+          this.props.toggleSyn(focusedId, num - 1);
+        }
+      }
     }
   }
 
@@ -171,7 +188,6 @@ class Spintax extends Component {
     if (focusedId === 0) { return; }
     const prevFoc = findPrevSw(toks, focusedId);
     if (focusedId !== null && prevFoc) {
-      console.log(prevFoc.id);
       this.props.setFocusId(prevFoc.id);
     } else return;
   }
@@ -179,10 +195,8 @@ class Spintax extends Component {
   handleRight() {
     const { focusedId, toks } = this.props;
     if (focusedId === toks.length - 1) { return; }
-    console.log({ toks, focusedId });
     const nextFoc = findNextSw(toks, focusedId);
     if (focusedId !== null && nextFoc) {
-      console.log(nextFoc.id)
       this.props.setFocusId(nextFoc.id);
     } else return;
   }
@@ -236,7 +250,6 @@ class Spintax extends Component {
         index: focusedId,
       }
     });
-    console.log(replacement);
   }
 
   render() {
@@ -293,7 +306,7 @@ class Spintax extends Component {
       ))
     );
     return (
-      <div onKeyDown={this.handleKeyDown.bind(this)}>
+      <div>
         <button onClick={() => this.setState({ richTextMode: !richTextMode })}>
           { richTextMode ? 'Plain' : 'Rich Text' }
         </button>
@@ -316,6 +329,7 @@ const mapStateToProps = ({ spintax }) => ({
 });
 
 export default connect(mapStateToProps, {
-  setFocusId,
-  resetFocusId,
-})(onClickOutside(Spintax));
+  toggleSyn, 
+  setFocusId, 
+  resetFocusId, 
+})(Spintax);

@@ -66,19 +66,9 @@ class QTip extends Component {
   
   
   handleKeyDown(e) {
-    e.persist();
-    console.log("From QTIP", e.keyCode);
-    const { currSyns } = this.state;
     const key = e.key;
-    let numKey;
     if(key === 'Enter') {
       this.handleGo();
-    } else if(key === 'ArrowLeft') {
-      if(document.activeElement === this.synInput) {
-        e.stopPropagation();
-      }
-      //e.preventDefault();
-      console.log('comeBefore');
     }
   }
 

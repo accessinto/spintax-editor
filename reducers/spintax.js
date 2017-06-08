@@ -115,7 +115,7 @@ module.exports = (state = INITIAL_STATE, action) => {
       });
     }
     case 'TOGGLE_SYN': {
-      const { synId, tokId } = action.payload;
+      const { tokId, synId } = action.payload;
       const pre = state.toks.slice(0, tokId);
       const suf = state.toks.slice(tokId + 1);
       const item = state.toks[tokId];
