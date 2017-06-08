@@ -4,11 +4,12 @@ import find from 'lodash/find';
 import findLast from 'lodash/findLast';
 import uniq from 'lodash/uniq';
 import flatten from 'lodash/flatten';
-import ToolTip from 'react-portal-tooltip';
+// import ToolTip from 'react-portal-tooltip';
 import QTip from './QTip';
 import onClickOutside from 'react-onclickoutside';
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
+import ToolTip from './Tooltip';
 
 import { setFocusId, resetFocusId } from '../actions/EditorActions';
 
@@ -88,13 +89,17 @@ class Spintax extends Component {
   }
 
   componentDidMount() {
-    document.addEventListener("keydown", this.handleKeyDown.bind(this));
-    this.container.onselectstart = this.onSelectStart.bind(this);
+    //document.keydown = this.handleKeyDown.bind(this)
+    //document.addEventListener("keydown", this.handleKeyDown.bind(this));
     this.container.addEventListener('mouseup', this.mouseUp2.bind(this));
   }
 
   componentWillReceiveProps(nextProps) {
     // console.log('cwr');
+    if(nextProps.focusedId !== null) {
+      //document.keydown = null;
+      //document.removeEventListener("keydown", this.handleKeyDown.bind(this));
+    }
   }
   
 
@@ -151,13 +156,9 @@ class Spintax extends Component {
     }
   }
 
-  onSelectStart() {
-    this.setState({
-      focusedId: null,
-    });
-  }
-
   handleKeyDown(e) {
+    console.log(e.target);
+    console.log(document.activeElement);
     if(e.key === 'ArrowRight') {
       this.handleRight();
     } else if(e.key === 'ArrowLeft') {
@@ -170,22 +171,19 @@ class Spintax extends Component {
     if (focusedId === 0) { return; }
     const prevFoc = findPrevSw(toks, focusedId);
     if (focusedId !== null && prevFoc) {
+      console.log(prevFoc.id);
       this.props.setFocusId(prevFoc.id);
-      return {
-        selObj: null,
-      };
     } else return;
   }
 
   handleRight() {
     const { focusedId, toks } = this.props;
     if (focusedId === toks.length - 1) { return; }
+    console.log({ toks, focusedId });
     const nextFoc = findNextSw(toks, focusedId);
     if (focusedId !== null && nextFoc) {
+      console.log(nextFoc.id)
       this.props.setFocusId(nextFoc.id);
-      return {
-        selObj: null,
-      };
     } else return;
   }
 
@@ -266,6 +264,16 @@ class Spintax extends Component {
             onMouseOut={this.onMouseLeave.bind(this, tok)}
             onClick={this.handleSpinwordClick.bind(this, tok)} 
           />
+          {focusedId === tok.id
+            && 
+            <ToolTip>
+              <QTip 
+                prevHandler={this.handleLeft.bind(this)}
+                nextHandler={this.handleRight.bind(this)}
+                prevDisabled={!findPrevSw(toks, focusedId)}
+                nextDisabled={!findNextSw(toks, focusedId)}
+              />
+            </ToolTip>}
         </span>
       ))
     );
@@ -285,34 +293,18 @@ class Spintax extends Component {
       ))
     );
     return (
-      <div>
+      <div onKeyDown={this.handleKeyDown.bind(this)}>
         <button onClick={() => this.setState({ richTextMode: !richTextMode })}>
           { richTextMode ? 'Plain' : 'Rich Text' }
         </button>
-      <div 
-        ref={(el) => this.container = el}
-        id="sp"
-        className="sp" 
-        style={{ width: '1000px', minHeight: '350px' }}
-      >
-        { richTextMode ? richTextRenderer : plainTextRenderer }
-      </div>
-      {focusedId 
-      && 
-      <QTip 
-        prevHandler={this.handleLeft.bind(this)}
-        nextHandler={this.handleRight.bind(this)}
-        prevDisabled={!findPrevSw(toks, focusedId)}
-        nextDisabled={!findNextSw(toks, focusedId)}
-      />}
-      <ToolTip 
-        active={selObj !== null}
-        position="bottom"
-        parent="#sp"
-      >
-        Selection: {selObj ? selObj.toString() : 'N/A'}
-        <br />
-      </ToolTip>
+        <div 
+          ref={(el) => this.container = el}
+          id="sp"
+          className="sp" 
+          style={{ width: '1000px', minHeight: '350px' }}
+        >
+          { richTextMode ? richTextRenderer : plainTextRenderer }
+        </div>
       </div>
     );
   }

@@ -48,20 +48,37 @@ class QTip extends Component {
   }
 
   componentDidMount () {
-    document.addEventListener("keydown", this.handleKeyDown.bind(this));
+    this.synInput.focus();
+    //document.keydown = this.handleKeyDown.bind(this)
+    //window.addEventListener("keydown", this.handleKeyDown.bind(this));
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       currSyns: nextProps.syns,
-    })
+    });
+  }
+
+  componentWillUnmount() {
+     //document.keydown = null
+    //window.removeEventListener("keydown", this.handleKeyDown.bind(this));
   }
   
+  
   handleKeyDown(e) {
+    e.persist();
+    console.log("From QTIP", e.keyCode);
     const { currSyns } = this.state;
-    const key = Number(e.key) || 0;
-    if(key > 0 && key <= currSyns.length) {
-      this.handleSynClick(key - 1);
+    const key = e.key;
+    let numKey;
+    if(key === 'Enter') {
+      this.handleGo();
+    } else if(key === 'ArrowLeft') {
+      if(document.activeElement === this.synInput) {
+        e.stopPropagation();
+      }
+      //e.preventDefault();
+      console.log('comeBefore');
     }
   }
 
@@ -91,7 +108,7 @@ class QTip extends Component {
     });
   }
 
-  handleGo() {
+  handleGo(clear = true) {
     const { focusedId } = this.props;
     const { newInput, appendStatus } = this.state;
     console.log('HANDLEGO with appendStatus', appendStatus);
@@ -104,7 +121,9 @@ class QTip extends Component {
         this.props.addSynAfter(focusedId, newInput);
       }
     }
-    this.setState({ newInput: '', appendStatus: 'spintax' });
+    if(clear) {
+      this.setState({ newInput: '', appendStatus: 'spintax' });
+    }
   }
 
   render () {
@@ -134,13 +153,13 @@ class QTip extends Component {
       </ul>
     );
     return (
-      <div style={{
-        background: 'black',
-        color: 'white',
-      }}>
+      <div className="tooltip-content">
         <input 
-          name='newSyn' 
+          type="text"
+          name="newSyn" 
+          ref={ el => this.synInput = el }
           value={newInput}
+          onKeyDown={this.handleKeyDown.bind(this)}
           onChange={(e) => this.setState({ newInput: e.target.value })}
         />
         <button onClick={this.handleGo.bind(this)}>GO</button>
