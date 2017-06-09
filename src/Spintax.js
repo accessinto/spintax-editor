@@ -26,7 +26,7 @@ const tagMatch = html => {
 
 window.expand2 = str => {
   const res = window.expandH2([str]);
-  if(!res) return [str, ''];
+  if(!res) return [str];
   return res;
 };
 
@@ -303,7 +303,8 @@ class Spintax extends Component {
         <span key={tok.id} id={`sw${tok.id}`}>
           <SpinwordHtml 
             tooltipSelected={focusedId === tok.id}
-            higlighted={highlightedId === tok.id || highlightedId === tok.matchId}
+            higlighted={highlightedId && inRange(tok.id, highlightedId, toks[highlightedId].matchId + 1)}
+            selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
             onMouseOut={this.onMouseLeave.bind(this, tok)}

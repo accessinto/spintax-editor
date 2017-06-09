@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import LibTooltip from 'react-portal-tooltip';
+import { SkyLightStateless } from 'react-skylight';
 import 'pui-css-tooltips';
 
 class Tooltip extends Component {
@@ -32,7 +33,9 @@ class Tooltip extends Component {
     };
     return (
       <div id="tc" style={{style}}>
-          {children}
+          <SkyLightStateless isVisible>
+            {children}
+          </SkyLightStateless>
       </div>
     );
   }

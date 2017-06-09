@@ -1,8 +1,8 @@
 import React from 'react';
 //import classNames from 'classnames';
 
-export default ({ tooltipSelected, higlighted, t, onClick, ...rest }) => {
-  const backgroundColor = (tooltipSelected || higlighted) ? 'lightblue' : 'white';
+export default ({ tooltipSelected, selected, higlighted, t, onClick, ...rest }) => {
+  const backgroundColor = (selected || tooltipSelected || higlighted) ? 'lightblue' : 'white';
   const textDecoration = higlighted ? 'underline red' : 'none';
   const fontSize = higlighted ? '200%' : '100%';
   return (
