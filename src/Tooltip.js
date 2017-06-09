@@ -33,9 +33,7 @@ class Tooltip extends Component {
     };
     return (
       <div id="tc" style={{style}}>
-          <SkyLightStateless isVisible>
-            {children}
-          </SkyLightStateless>
+        {children}
       </div>
     );
   }
