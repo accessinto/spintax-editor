@@ -33,7 +33,11 @@ class Tooltip extends Component {
     };
     return (
       <div id="tc" style={{style}}>
-        {children}
+        <div className="qtip qtip-default syns-tooltip qtip-bootstrap qtip-shadow qtip-rounded qtip-pos-tl qtip-focus">
+          <div className="qtip-content">
+            {children}
+          </div>
+        </div>
       </div>
     );
   }

@@ -80,19 +80,22 @@ class SynsTooltip extends Component {
     }
   }
 
-  handleBeforeClick() {
+  handleBeforeClick(e) {
+    e.preventDefault();
     this.setState((prevState, props) => ({
       appendStatus: 'before'
     }));
   }
   
-  handleBackClick() {
+  handleBackClick(e) {
+    e.preventDefault();
     this.setState((prevState, props) => ({
       appendStatus: 'spintax'
     }));
   }
 
-  handleAfterClick() {
+  handleAfterClick(e) {
+    e.preventDefault();
     this.setState((prevState, props) => ({
       appendStatus: 'after'
     }));
@@ -137,7 +140,7 @@ class SynsTooltip extends Component {
     } = this.props;
     const { appendStatus, newInput } = this.state;
     const synsRenderer = (
-      <ul>
+      <ul className="syns-list">
         {syns.map((syn, i) => (
           <li 
             key={i} 
@@ -151,35 +154,82 @@ class SynsTooltip extends Component {
       </ul>
     );
     return (
-      <div className="tooltip-content">
-        <input 
-          type="text"
-          name="newSyn" 
-          ref={ el => this.synInput = el }
-          value={newInput}
-          onKeyDown={this.handleKeyDown.bind(this)}
-          onChange={(e) => this.setState({ newInput: e.target.value })}
-        />
-        <button onClick={this.handleGo.bind(this)}>GO</button>
-        {appendStatus === 'spintax' && synsRenderer}
-        <div className="append-tab">
-          {appendStatus !== 'before' && <button onClick={this.handleBeforeClick.bind(this)}>Text Before</button>}
-          {appendStatus !== 'spintax' && <button onClick={this.handleBackClick.bind(this)}>Back</button>}
-          {appendStatus !== 'after' && <button onClick={this.handleAfterClick.bind(this)}>Text After</button>}
+      <div className="tooltipWrapper">
+        <div className="input-tab">
+          <div className="input-group sp-form">
+            <input 
+              className="form-control new-syn edit-sp"
+              type="text"
+              name="newSyn" 
+              ref={ el => this.synInput = el }
+              value={newInput}
+              onKeyDown={this.handleKeyDown.bind(this)}
+              onChange={(e) => this.setState({ newInput: e.target.value })}
+            />
+            <span className="input-group-btn">
+              <button 
+                className="btn btn-default new-syn-submit"
+                onClick={this.handleGo.bind(this)}
+              >GO</button>
+            </span>
+          </div>
         </div>
+        <div className="list-tab">
+          {appendStatus === 'spintax' && synsRenderer}
+        </div>
+        <div className="append-tab">
+          {
+            appendStatus !== 'before' 
+            && 
+            <a 
+              href="#"
+              style={{ display: 'inline' }}
+              className="append text-before"
+              onClick={this.handleBeforeClick.bind(this)}
+            >
+              Text Before
+            </a>
+          }
+          {
+            appendStatus !== 'spintax' 
+            && 
+            <a 
+              href="#"
+              style={{ color: 'deepskyblue' }}
+              className="back-to-spintax"
+              onClick={this.handleBackClick.bind(this)}
+            >
+              Back
+            </a>
+          }
+          {
+            appendStatus !== 'after' 
+            && 
+            <a 
+              href='#'
+              style={{ display: 'inline' }}
+              className="append text-after"
+              onClick={this.handleAfterClick.bind(this)}
+            >
+              Text After
+            </a>}
+        </div>
+        <br />
         <div className="navigate-tab">
-          <button
-            onClick={prevHandler}
-            disabled={prevDisabled}
-          >
-            Previous
-          </button>
-          <button
+          <span
+            className="next-tooltip"
             onClick={nextHandler}
             disabled={nextDisabled}
           >
             Next
-          </button>
+          </span>
+          <span
+            className="prev-tooltip"
+            onClick={prevHandler}
+            disabled={prevDisabled}
+          >
+            Previous
+          </span>
         </div>
       </div>
     )
