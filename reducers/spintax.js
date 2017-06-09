@@ -1,6 +1,10 @@
 const INITIAL_STATE = {
   toks: [],
   focusedId: null,
+  selection: {
+    start: null,
+    end: null,
+  }
 };
 
 const replacementText = syns => {
@@ -102,6 +106,67 @@ module.exports = (state = INITIAL_STATE, action) => {
     case 'SET_FOCUS': return Object.assign({}, state, { focusedId: action.payload.tokId });
     case 'RESET_FOCUS': return Object.assign({}, state, { focusedId: null });
     case 'LOAD': return Object.assign({}, state, { toks: tokenize(action.payload) });
+    case 'SET_SELECTION_RANGE': {
+      const { start, end } = action.payload;
+      return Object.assign({}, state, {
+        selection: {
+          start,
+          end,
+        }
+      });
+    }
+    case 'RESET_SELECTION': {
+      return Object.assign({}, state, {
+        selection: {
+          start: null, 
+          end: null, 
+        }
+      });
+    }
+    case 'REWRITE': {
+      const { start, end } = state.selection;
+      const syns = action.payload;
+      const startTok = state.toks[start];
+      const endTok = state.toks[end];
+      const pre = state.toks.slice(0, start);
+      const oldLength = endTok.end - startTok.start;
+      const newT = `{${syns.join('|')}}`;
+      const newToken = {
+        id: start,
+        type: 4,
+        t: newT,
+        start: startTok.start,
+        end: startTok.start + newT.length,
+        length: newT.length,
+        syns: syns.map(syn => ({ content: syn, selected: true })),
+      };
+      const suf = state.toks.slice(end + 1);
+      const modifiedSuf = suf.map(tok => {
+        let newMatchId = tok.matchId;
+        if(tok.matchId && tok.matchId > start + 1) {
+          newMatchId = tok.matchId - (end - start);
+        }
+        return Object.assign({}, tok, {
+          id: tok.id - (end - start),
+          start: tok.start - oldLength + newT.length,
+          end: tok.start - oldLength + newT.length + tok.length,
+          matchId: newMatchId,
+        });
+      });
+      debugger;
+      return Object.assign({}, state, {
+        focusedId: start,
+        toks: [
+          ...pre,
+          newToken,
+          ...modifiedSuf
+        ],
+        selection: {
+          start: null,
+          end: null,
+        }
+      })
+    }
     case 'GO': {
       const { replacement, index } = action.payload;
       const pre = state.toks.slice(0, index);

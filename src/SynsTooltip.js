@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import onClickOutside from 'react-onclickoutside';
 import ToolTip from 'react-portal-tooltip';
 
 import { 
@@ -8,6 +9,8 @@ import {
   addSynBefore,
   addSynAfter, 
 } from '../actions/SynsActions';
+
+import { resetFocusId } from '../actions/EditorActions';
 
 const replacementTextWithNewInput = (syns, input) => {
   let replacement;
@@ -36,7 +39,7 @@ const replacementText = syns => {
   return replacement;
 }
 
-class QTip extends Component {
+class SynsTooltip extends Component {
 
   constructor(props) {
     super(props);
@@ -62,6 +65,11 @@ class QTip extends Component {
   componentWillUnmount() {
      //document.keydown = null
     //window.removeEventListener("keydown", this.handleKeyDown.bind(this));
+  }
+
+  handleClickOutside(e) {
+    console.log('syns outside');
+    this.props.resetFocusId();
   }
   
   
@@ -188,4 +196,5 @@ export default connect(mapStateToProps, {
   toggleSyn,
   addSynBefore,
   addSynAfter,
-})(QTip);
+  resetFocusId, 
+})(onClickOutside(SynsTooltip));

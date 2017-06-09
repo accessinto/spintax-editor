@@ -30,9 +30,15 @@ const addSynAfter = (tokId, syn) => ({
   }
 });
 
+const rewriteSyns = (synsArray) => ({
+  type: 'REWRITE',
+  payload: synsArray,
+});
+
 module.exports = {
   toggleSyn,
   addSyn,
   addSynBefore,
   addSynAfter,
+  rewriteSyns, 
 }

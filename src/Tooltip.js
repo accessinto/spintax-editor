@@ -2,9 +2,6 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import LibTooltip from 'react-portal-tooltip';
-import onClickOutside from 'react-onclickoutside';
-
-import { resetFocusId } from '../actions/EditorActions';
 import 'pui-css-tooltips';
 
 class Tooltip extends Component {
@@ -15,7 +12,6 @@ class Tooltip extends Component {
 
   toggle() {
     const node = findDOMNode(this);
-    console.log(node);
     this.setState((prevState, props) => ({
       opacity: !prevState.opacity,
       top: node.offsetTop,
@@ -23,10 +19,7 @@ class Tooltip extends Component {
     }));
   }
 
-  handleClickOutside(e) {
-    console.log('qwe');
-    this.props.resetFocusId();
-  }
+
 
   render() {
     const { children } = this.props;
@@ -45,4 +38,4 @@ class Tooltip extends Component {
   }
 }
 
-export default connect(null, { resetFocusId })(onClickOutside(Tooltip));
+export default Tooltip;

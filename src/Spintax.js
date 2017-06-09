@@ -4,14 +4,16 @@ import find from 'lodash/find';
 import findLast from 'lodash/findLast';
 import uniq from 'lodash/uniq';
 import flatten from 'lodash/flatten';
+import inRange from 'lodash/inRange';
 // import ToolTip from 'react-portal-tooltip';
-import QTip from './QTip';
+import SynsTooltip from './SynsTooltip';
+import RewriteTooltip from './RewriteTooltip';
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
 import ToolTip from './Tooltip';
 
 import { toggleSyn } from '../actions/SynsActions';
-import { setFocusId, resetFocusId } from '../actions/EditorActions';
+import { setFocusId, resetFocusId, setSelectionRange } from '../actions/EditorActions';
 
 const tagMatch = html => {
   var doc = document.createElement('div');
@@ -81,8 +83,6 @@ const findPrevSw = (toks, startsAt = toks.length - 1) => {
 class Spintax extends Component {
   
   state = {
-    focusedId: null,
-    toks: [],
     selObj: '',
     highlightedId: null,
     richTextMode: false,
@@ -91,6 +91,7 @@ class Spintax extends Component {
   componentDidMount() {
     //document.keydown = this.handleKeyDown.bind(this)
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
+    //document.addEventListener("selectionchange", this.mouseUp2.bind(this));
     this.container.addEventListener('mouseup', this.mouseUp2.bind(this));
   }
 
@@ -105,59 +106,65 @@ class Spintax extends Component {
 
   mouseUp2(e) {
     console.log('mouse up')
-    const { toks } = this.props;
+    const { toks, selection } = this.props;
     const selObj = window.getSelection();
-    if(selObj.anchorNode.isSameNode(selObj.focusNode)) {
+    console.log(selObj.anchorNode, selObj.focusNode);
+    if(selObj.anchorNode.isSameNode(selObj.focusNode) || (selection.start && selection.end)) {
       console.log('SAME NODE');
-      console.log(selObj.anchorNode);
+      return;
     }
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
-      //debugger;
-      const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
-      const range = selObj.getRangeAt(0);
-      const f = selObj.focusNode;
-      const a = selObj.anchorNode;
-      if(backwards) {
-        range.setStart(f, 0);
-        range.setEnd(a, a.textContent.length)
-      } else {
-        range.setStart(a, 0);
-        range.setEnd(f, f.textContent.length);
+      // debugger;
+      try {
+        const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
+        const range = selObj.getRangeAt(0);
+        const f = selObj.focusNode;
+        const a = selObj.anchorNode;
+        if(backwards) {
+          range.setStart(f, 0);
+          range.setEnd(a, a.textContent.length)
+        } else {
+          range.setStart(a, 0);
+          range.setEnd(f, f.textContent.length);
+        }
+        const newf = selObj.focusNode;
+        const newa = selObj.anchorNode;
+        let fd, ad;
+        if(newf.dataset) {
+          fd = newf.dataset;
+        } else {
+          fd = newf.parentElement.dataset;
+        }
+        if(newa.dataset) {
+          ad = newa.dataset;
+        } else {
+          ad = newa.parentElement.dataset;
+        }
+        const ft = Number(fd.id);
+        const at = Number(ad.id);
+        const o = [];
+        const c = [];
+        const selectedToks = toks.slice(at, ft + 1);
+        const oTags = selectedToks.filter(t => t.type === 2);
+        const cTags = selectedToks.filter(t => t.type === 3);
+        const tagExtendedAt = cTags.reduce((min, curr) => Math.min(curr.matchId || curr.id, min), at);
+        const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId || curr.id, max), ft);
+        const oBracks = selectedToks.filter(t => t.type === 5);
+        const cBracks = selectedToks.filter(t => t.type === 6);
+        const pipes = selectedToks.filter(t => t.type === 7);
+        const pAt = pipes.reduce((min, curr) => Math.min(curr.matchId, min), tagExtendedAt);
+        const pFt = pipes.reduce((max, curr) => Math.max(toks[curr.matchId].matchId, max), tagExtendedFt);
+        const startTokId = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), pAt);
+        const endTokId = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), pFt);
+        //const finalA = document.getElementById(`sw${startTokId}`);
+        //const finalF = document.getElementById(`sw${endTokId}`);
+        //range.setStart(finalA, 0);
+        //range.setEnd(finalF, 1);
+        this.props.setSelectionRange(startTokId, endTokId);
+        selObj.removeAllRanges();
+      } catch(e) {
+        console.log('Error caught in mouseUp2: ', e);
       }
-      const newf = selObj.focusNode;
-      const newa = selObj.anchorNode;
-      let fd, ad;
-      if(newf.dataset) {
-        fd = newf.dataset;
-      } else {
-        fd = newf.parentElement.dataset;
-      }
-      if(newa.dataset) {
-        ad = newa.dataset;
-      } else {
-        ad = newa.parentElement.dataset;
-      }
-      const ft = Number(fd.id);
-      const at = Number(ad.id);
-      const o = [];
-      const c = [];
-      const selectedToks = toks.slice(at, ft + 1);
-      const oTags = selectedToks.filter(t => t.type === 2);
-      const cTags = selectedToks.filter(t => t.type === 3);
-      const tagExtendedAt = cTags.reduce((min, curr) => Math.min(curr.matchId || curr.id, min), at);
-      const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId || curr.id, max), ft);
-      const oBracks = selectedToks.filter(t => t.type === 5);
-      const cBracks = selectedToks.filter(t => t.type === 6);
-      const bracksExtendedAt = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), tagExtendedAt);
-      const bracksExtendedFt = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), tagExtendedFt);
-      const finalA = document.getElementById(`sw${bracksExtendedAt}`);
-      const finalF = document.getElementById(`sw${bracksExtendedFt}`);
-      range.setStart(finalA, 0);
-      range.setEnd(finalF, 1);
-      this.setState({
-        selObj
-      });
-      console.log(window.expand2(selObj.toString()));
     }
   }
 
@@ -202,19 +209,10 @@ class Spintax extends Component {
   }
 
   handleSpinwordClick(tok) {
+    console.log('handleSpinwordClick');
     if(tok.type === 4){
       this.props.setFocusId(tok.id);
-      this.setState({
-        selObj: null,
-      });
     }
-  }
-
-  handleClickOutside(e) {
-    this.props.resetFocusId();
-    this.setState({
-      selObj: null,
-    })
   }
 
   onMouseEnter(tok) {
@@ -253,7 +251,8 @@ class Spintax extends Component {
   }
 
   render() {
-    const { toks, focusedId } = this.props;
+    const { toks, focusedId, selection } = this.props;
+    console.log(selection);
     const { selObj, highlightedId, richTextMode } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
@@ -271,7 +270,8 @@ class Spintax extends Component {
         <span key={tok.id} id={`sw${tok.id}`}>
           <Spinword 
             tooltipSelected={focusedId === tok.id}
-            higlighted={highlightedId === tok.id || highlightedId === tok.matchId}
+            higlighted={highlightedId && inRange(tok.id, highlightedId, toks[highlightedId].matchId + 1)}
+            selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
             onMouseOut={this.onMouseLeave.bind(this, tok)}
@@ -280,13 +280,20 @@ class Spintax extends Component {
           {focusedId === tok.id
             && 
             <ToolTip>
-              <QTip 
+              <SynsTooltip 
                 prevHandler={this.handleLeft.bind(this)}
                 nextHandler={this.handleRight.bind(this)}
                 prevDisabled={!findPrevSw(toks, focusedId)}
                 nextDisabled={!findNextSw(toks, focusedId)}
               />
             </ToolTip>}
+          {
+            !focusedId && selection.end === tok.id
+            &&
+            <ToolTip>
+              <RewriteTooltip />
+            </ToolTip>
+          }
         </span>
       ))
     );
@@ -302,6 +309,23 @@ class Spintax extends Component {
             onMouseOut={this.onMouseLeave.bind(this, tok)}
             onClick={this.handleSpinwordClick.bind(this, tok)} 
           />
+          {focusedId === tok.id
+          && 
+          <ToolTip>
+            <SynsTooltip 
+              prevHandler={this.handleLeft.bind(this)}
+              nextHandler={this.handleRight.bind(this)}
+              prevDisabled={!findPrevSw(toks, focusedId)}
+              nextDisabled={!findNextSw(toks, focusedId)}
+            />
+          </ToolTip>}
+          {
+            !focusedId && selection.end === tok.id
+            &&
+            <ToolTip>
+              <RewriteTooltip />
+            </ToolTip>
+          }
         </span>
       ))
     );
@@ -325,11 +349,13 @@ class Spintax extends Component {
 
 const mapStateToProps = ({ spintax }) => ({
   toks: spintax.toks,
-  focusedId: spintax.focusedId
+  focusedId: spintax.focusedId,
+  selection: spintax.selection
 });
 
 export default connect(mapStateToProps, {
   toggleSyn, 
   setFocusId, 
   resetFocusId, 
+  setSelectionRange, 
 })(Spintax);
