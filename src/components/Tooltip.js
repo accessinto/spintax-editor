@@ -1,10 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { findDOMNode } from 'react-dom';
-import LibTooltip from 'react-portal-tooltip';
-import { SkyLightStateless } from 'react-skylight';
-import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed'
-import 'pui-css-tooltips';
 
 var cumulativeOffset = function(element) {
   var top = 0, left = 0;
@@ -33,13 +27,9 @@ class Tooltip extends Component {
   }
 
   componentDidMount () {
-    console.log('cdm');
     const node = document.getElementById(`sw${this.props.fid}`);
     const [left, top] = absoluteTopRightPosition(node);
-    console.log({ left, top, ot: node.offsetTop, ol: node.offsetLeft })
-    console.log(this.tt);
-    scrollIntoViewIfNeeded(this.tt, true);
-    //node.scrollIntoView({block: 'end', behavior: 'smooth'});
+    node.scrollIntoView({block: 'end', behavior: 'smooth'});
     this.setState({
       left,
       top, 
@@ -47,11 +37,11 @@ class Tooltip extends Component {
   }
 
   render() {
-    const { children, fid } = this.props;
+    const { children } = this.props;
     const { opacity, top, left } = this.state;
     const style = {
-      background: 'green',
-      color: 'blue',
+      background: 'lavender',
+      color: 'black',
       position: 'absolute',
       zIndex: opacity ? 1000 : -1000,
       opacity: +opacity,

@@ -6,22 +6,10 @@ import uniq from 'lodash/uniq';
 import flatten from 'lodash/flatten';
 import inRange from 'lodash/inRange';
 
-import { 
-  EditorState, 
-  ContentState, 
-  convertFromHTML, 
-  convertFromRaw, 
-  convertToRaw, 
-} from 'draft-js';
-
-import draftToHtml from 'draftjs-to-html';
-import { convertToHTML } from 'draft-convert';
-
 // import ToolTip from 'react-portal-tooltip';
 import SynsTooltip from './SynsTooltip';
 import RewriteTooltip from './RewriteTooltip';
 import Spintax from './Spintax';
-import WysiwygEditor from './WysiwygEditor';
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
 import ToolTip from './Tooltip';
@@ -278,7 +266,7 @@ class Widget extends Component {
   }
 
   handleEditModeChange() {
-    const { toks, editorState } = this.props;
+    const { toks } = this.props;
     const { interactive } = this.state;
     this.setState({
       interactive: !interactive
@@ -348,6 +336,7 @@ class Widget extends Component {
       toks.map((tok) => (
         <span key={tok.id} id={`sw${tok.id}`}>
           <SpinwordHtml 
+            unspun={ showUnspun && tok.unspun }
             tooltipSelected={focusedId === tok.id}
             higlighted={highlightedId && inRange(tok.id, highlightedId, toks[highlightedId].matchId + 1)}
             selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
