@@ -24,8 +24,8 @@ const App = ({ sp }) => (
   </Provider>
 );
 
-window.loadEditor = (sp) => render(<App sp={RANDOM_SPINTAX3} />, document.getElementById('root'));
+window.loadEditor = (sp) => render(<App sp={sp} />, document.getElementById('root'));
 window.toggleRichTextMode = () => store.dispatch(toggleRichTextMode());
 
 //TODO REMOVE NEXT LINE BEFORE BUILDING
-window.loadEditor();
+// window.loadEditor(RANDOM_SPINTAX3);
