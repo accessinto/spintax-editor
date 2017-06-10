@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import Spintax from './Spintax';
+import Widget from './Widget';
 import { RANDOM_SPINTAX3, RANDOM_SPINTAX4 } from './mock';
 
 class SpintaxContainer extends Component {
@@ -15,7 +15,7 @@ class SpintaxContainer extends Component {
   render() {
     return (
       <div>
-        <Spintax />
+        <Widget />
       </div>
     );
   }

@@ -1,7 +1,12 @@
 export const reloadEditor = str => ({
   type: 'RELOAD_EDITOR',
   payload: str, 
-})
+});
+
+export const setEditorState = editorState => ({
+  type: 'SET_EDITOR_STATE',
+  payload: editorState,
+});
 
 export const setFocusId = tokId => ({
   type: 'SET_FOCUS',

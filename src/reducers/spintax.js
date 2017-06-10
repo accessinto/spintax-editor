@@ -8,6 +8,7 @@ const INITIAL_STATE = {
   },
   richTextMode: false,
   showUnspun: false, 
+  editorState: null,
 };
 
 const replacementText = syns => {
@@ -115,12 +116,13 @@ const tokenize = spintax => {
 }
 
 export default (state = INITIAL_STATE, action) => {
-  //console.log('Reducer');
+  console.log('Reducer');
   switch(action.type) {
     case 'TOGGLE_SHOW_UNSPUN': return Object.assign({}, state, { showUnspun: !state.showUnspun });
     case 'TOGGLE_RICH_MODE': return Object.assign({}, state, { richTextMode: !state.richTextMode });
     case 'SET_FOCUS': return Object.assign({}, state, { focusedId: action.payload.tokId });
     case 'RESET_FOCUS': return Object.assign({}, state, { focusedId: null });
+    case 'SET_EDITOR_STATE': return Object.assign({}, state, { editorState: action.payload })
     case 'LOAD': {
       const toks = tokenize(action.payload);
       return Object.assign({}, state, { 
@@ -128,7 +130,7 @@ export default (state = INITIAL_STATE, action) => {
         initialToks: toks,
       });
     }
-    case 'RELOAD': return Object.assign({}, INITIAL_STATE, { 
+    case 'RELOAD_EDITOR': return Object.assign({}, INITIAL_STATE, { 
       toks: tokenize(action.payload), 
       initialToks: state.initialToks, 
     });
