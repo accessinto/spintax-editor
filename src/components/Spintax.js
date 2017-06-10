@@ -18,6 +18,7 @@ import {
   resetFocusId, 
   setSelectionRange,
   toggleRichTextMode, 
+  toggleShowUnspun, 
 } from '../actions/EditorActions';
 
 const tagMatch = html => {
@@ -265,8 +266,8 @@ class Spintax extends Component {
   }
 
   render() {
-    const { toks, focusedId, selection, richTextMode } = this.props;
-    console.log('RENDER CALLED');
+    const { toks, focusedId, selection, richTextMode, showUnspun } = this.props;
+    console.log('RENDER CALLED', showUnspun);
     const { selObj, highlightedId } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
@@ -283,6 +284,7 @@ class Spintax extends Component {
       toks.map((tok) => (
         <span key={tok.id} id={`sw${tok.id}`}>
           <Spinword 
+            unspun={ showUnspun && tok.unspun }
             tooltipSelected={focusedId === tok.id}
             higlighted={highlightedId && inRange(tok.id, highlightedId, toks[highlightedId].matchId + 1)}
             selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
@@ -351,6 +353,10 @@ class Spintax extends Component {
         <button onClick={this.props.toggleRichTextMode}>
           { richTextMode ? 'Plain' : 'Rich Text' }
         </button>
+
+        <button onClick={this.props.toggleShowUnspun}>
+          { showUnspun ? 'Hide Unspun' : 'Show Unspun' }
+        </button>
         <div 
           ref={(el) => this.container = el}
           id="sp"
@@ -369,6 +375,7 @@ const mapStateToProps = ({ spintax }) => ({
   focusedId: spintax.focusedId,
   selection: spintax.selection,
   richTextMode: spintax.richTextMode,
+  showUnspun: spintax.showUnspun, 
 });
 
 export default connect(mapStateToProps, {
@@ -376,5 +383,6 @@ export default connect(mapStateToProps, {
   setFocusId, 
   resetFocusId, 
   setSelectionRange, 
-  toggleRichTextMode, 
+  toggleRichTextMode,
+  toggleShowUnspun,  
 })(Spintax);

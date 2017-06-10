@@ -1,31 +1,32 @@
-const setFocusId = (tokId) => ({
+export const reloadEditor = str => ({
+  type: 'RELOAD_EDITOR',
+  payload: str, 
+})
+
+export const setFocusId = tokId => ({
   type: 'SET_FOCUS',
   payload: {
     tokId
   }
 });
 
-const resetFocusId = () => ({
+export const resetFocusId = () => ({
   type: 'RESET_FOCUS',
 });
 
-const setSelectionRange = (start, end) => ({
+export const setSelectionRange = (start, end) => ({
   type: 'SET_SELECTION_RANGE',
   payload: { start, end }
 });
 
-const resetSelection = () => ({
+export const resetSelection = () => ({
   type: 'RESET_SELECTION',
 });
 
-const toggleRichTextMode = () => ({
+export const toggleRichTextMode = () => ({
   type: 'TOGGLE_RICH_MODE',
-})
+});
 
-module.exports = {
-  setFocusId,
-  resetFocusId,
-  setSelectionRange,
-  resetSelection, 
-  toggleRichTextMode, 
-}
+export const toggleShowUnspun = () => ({
+  type: 'TOGGLE_SHOW_UNSPUN',
+});

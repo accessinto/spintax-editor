@@ -1,4 +1,5 @@
 const INITIAL_STATE = {
+  initialToks: [],
   toks: [],
   focusedId: null,
   selection: {
@@ -6,6 +7,7 @@ const INITIAL_STATE = {
     end: null,
   },
   richTextMode: false,
+  showUnspun: false, 
 };
 
 const replacementText = syns => {
@@ -20,6 +22,12 @@ const replacementText = syns => {
   }
   return replacement;
 };
+
+const unspunTokenIds = toks => {
+  return toks
+      .filter(tok => tok.syns.length === 1)
+      .map(tok => tok.id);
+}
 
 const tokenize = spintax => {
   let m;
@@ -99,15 +107,31 @@ const tokenize = spintax => {
     }
     toks.push(obj);
   }
-  return toks;
+  return toks.map(tok => {
+    return Object.assign({}, tok, {
+      unspun: tok.syns && tok.syns.length === 1
+    });
+  });
 }
 
 export default (state = INITIAL_STATE, action) => {
+  //console.log('Reducer');
   switch(action.type) {
+    case 'TOGGLE_SHOW_UNSPUN': return Object.assign({}, state, { showUnspun: !state.showUnspun });
     case 'TOGGLE_RICH_MODE': return Object.assign({}, state, { richTextMode: !state.richTextMode });
     case 'SET_FOCUS': return Object.assign({}, state, { focusedId: action.payload.tokId });
     case 'RESET_FOCUS': return Object.assign({}, state, { focusedId: null });
-    case 'LOAD': return Object.assign({}, state, { toks: tokenize(action.payload) });
+    case 'LOAD': {
+      const toks = tokenize(action.payload);
+      return Object.assign({}, state, { 
+        toks,
+        initialToks: toks,
+      });
+    }
+    case 'RELOAD': return Object.assign({}, INITIAL_STATE, { 
+      toks: tokenize(action.payload), 
+      initialToks: state.initialToks, 
+    });
     case 'SET_SELECTION_RANGE': {
       const { start, end } = action.payload;
       return Object.assign({}, state, {

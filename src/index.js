@@ -10,6 +10,8 @@ import {
   resetFocusId, 
   setSelectionRange,
   toggleRichTextMode, 
+  toggleShowUnspun, 
+  reloadEditor, 
 } from './actions/EditorActions';
 
 import SpintaxContainer from './components/SpintaxContainer';
@@ -24,8 +26,9 @@ const App = ({ sp }) => (
   </Provider>
 );
 
-window.loadEditor = (sp) => render(<App sp={sp} />, document.getElementById('root'));
+window.loadEditor = sp => render(<App sp={sp} />, document.getElementById('root'));
 window.toggleRichTextMode = () => store.dispatch(toggleRichTextMode());
-
+window.toggleShowUnspun = () => store.dispatch(toggleShowUnspun());
+window.reloadEditor = sp => store.dispatch(reloadEditor());
 //TODO REMOVE NEXT LINE BEFORE BUILDING
-// window.loadEditor(RANDOM_SPINTAX3);
+window.loadEditor('This is a stupid test.');
