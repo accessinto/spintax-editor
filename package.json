@@ -12,7 +12,8 @@
     "react-portal-tooltip": "^1.1.5",
     "react-redux": "^5.0.5",
     "react-skylight": "^0.4.2",
-    "redux": "^3.6.0"
+    "redux": "^3.6.0",
+    "scroll-into-view-if-needed": "^1.1.0"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.1",

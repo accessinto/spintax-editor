@@ -174,11 +174,11 @@ class Spintax extends Component {
       if(e.key === 'ArrowRight') {
         e.preventDefault();
         e.stopPropagation();
-        this.handleRight();
+        this.handleRight(e);
       } else if(e.key === 'ArrowLeft') {
         e.preventDefault();
         e.stopPropagation();
-        this.handleLeft();
+        this.handleLeft(e);
       } else if(Number(e.key)) {
         const num = Number(e.key);
         e.preventDefault();
@@ -190,7 +190,8 @@ class Spintax extends Component {
     }
   }
 
-  handleLeft() {
+  handleLeft(e) {
+    e.preventDefault();
     const { focusedId, toks } = this.props;
     if (focusedId === 0) { return; }
     const prevFoc = findPrevSw(toks, focusedId);
@@ -199,7 +200,8 @@ class Spintax extends Component {
     } else return;
   }
 
-  handleRight() {
+  handleRight(e) {
+    e.preventDefault();
     const { focusedId, toks } = this.props;
     if (focusedId === toks.length - 1) { return; }
     const nextFoc = findNextSw(toks, focusedId);
@@ -209,7 +211,6 @@ class Spintax extends Component {
   }
 
   handleSpinwordClick(tok) {
-    console.log('handleSpinwordClick');
     if(tok.type === 4){
       this.props.setFocusId(tok.id);
     }
@@ -250,9 +251,14 @@ class Spintax extends Component {
     });
   }
 
+  shouldComponentUpdate(np, ns) {
+    console.log({ p: this.props, np });
+    return true;
+  }
+
   render() {
     const { toks, focusedId, selection } = this.props;
-    console.log(selection);
+    console.log('RENDER CALLED');
     const { selObj, highlightedId, richTextMode } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
@@ -279,7 +285,9 @@ class Spintax extends Component {
           />
           {focusedId === tok.id
             && 
-            <ToolTip>
+            <ToolTip
+              fid={tok.id}
+            >
               <SynsTooltip 
                 prevHandler={this.handleLeft.bind(this)}
                 nextHandler={this.handleRight.bind(this)}

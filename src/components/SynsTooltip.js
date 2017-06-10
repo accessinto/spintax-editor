@@ -217,18 +217,18 @@ class SynsTooltip extends Component {
         <br />
         <div className="navigate-tab">
           <span
-            className="next-tooltip"
-            onClick={nextHandler}
-            disabled={nextDisabled}
-          >
-            Next
-          </span>
-          <span
             className="prev-tooltip"
             onClick={prevHandler}
             disabled={prevDisabled}
           >
             Previous
+          </span>
+          <span
+            className="next-tooltip"
+            onClick={nextHandler}
+            disabled={nextDisabled}
+          >
+            Next
           </span>
         </div>
       </div>
