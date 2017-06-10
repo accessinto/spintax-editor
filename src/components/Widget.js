@@ -347,7 +347,7 @@ class Widget extends Component {
           />
           {focusedId === tok.id
           && 
-          <ToolTip>
+          <ToolTip fid={tok.id}>
             <SynsTooltip 
               prevHandler={this.handleLeft.bind(this)}
               nextHandler={this.handleRight.bind(this)}
