@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, dispatch } from 'react-redux';
 import find from 'lodash/find';
 import findLast from 'lodash/findLast';
 import uniq from 'lodash/uniq';
@@ -13,7 +13,12 @@ import SpinwordHtml from './SpinwordHtml';
 import ToolTip from './Tooltip';
 
 import { toggleSyn } from '../actions/SynsActions';
-import { setFocusId, resetFocusId, setSelectionRange } from '../actions/EditorActions';
+import { 
+  setFocusId, 
+  resetFocusId, 
+  setSelectionRange,
+  toggleRichTextMode, 
+} from '../actions/EditorActions';
 
 const tagMatch = html => {
   var doc = document.createElement('div');
@@ -23,6 +28,9 @@ const tagMatch = html => {
   }
   return ( doc.innerHTML === html );
 };
+
+window.sp = dispatch;
+//window.dp = () => dispatch(toggleRichTextMode());
 
 window.expand2 = str => {
   const res = window.expandH2([str]);
@@ -257,9 +265,9 @@ class Spintax extends Component {
   }
 
   render() {
-    const { toks, focusedId, selection } = this.props;
+    const { toks, focusedId, selection, richTextMode } = this.props;
     console.log('RENDER CALLED');
-    const { selObj, highlightedId, richTextMode } = this.state;
+    const { selObj, highlightedId } = this.state;
     let syns = [];
     const selectedToken = toks[focusedId];
     if (selectedToken) {
@@ -340,7 +348,7 @@ class Spintax extends Component {
     );
     return (
       <div>
-        <button onClick={() => this.setState({ richTextMode: !richTextMode })}>
+        <button onClick={this.props.toggleRichTextMode}>
           { richTextMode ? 'Plain' : 'Rich Text' }
         </button>
         <div 
@@ -359,7 +367,8 @@ class Spintax extends Component {
 const mapStateToProps = ({ spintax }) => ({
   toks: spintax.toks,
   focusedId: spintax.focusedId,
-  selection: spintax.selection
+  selection: spintax.selection,
+  richTextMode: spintax.richTextMode,
 });
 
 export default connect(mapStateToProps, {
@@ -367,4 +376,5 @@ export default connect(mapStateToProps, {
   setFocusId, 
   resetFocusId, 
   setSelectionRange, 
+  toggleRichTextMode, 
 })(Spintax);

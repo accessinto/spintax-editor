@@ -18,9 +18,14 @@ const resetSelection = () => ({
   type: 'RESET_SELECTION',
 });
 
+const toggleRichTextMode = () => ({
+  type: 'TOGGLE_RICH_MODE',
+})
+
 module.exports = {
   setFocusId,
   resetFocusId,
   setSelectionRange,
   resetSelection, 
+  toggleRichTextMode, 
 }

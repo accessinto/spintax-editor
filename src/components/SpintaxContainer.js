@@ -8,7 +8,7 @@ class SpintaxContainer extends Component {
   componentWillMount () {
     this.props.dispatch({
       type: 'LOAD',
-      payload: RANDOM_SPINTAX3,
+      payload: this.props.spintax,
     });
   }
 

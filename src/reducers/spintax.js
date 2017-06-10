@@ -4,7 +4,8 @@ const INITIAL_STATE = {
   selection: {
     start: null,
     end: null,
-  }
+  },
+  richTextMode: false,
 };
 
 const replacementText = syns => {
@@ -101,8 +102,9 @@ const tokenize = spintax => {
   return toks;
 }
 
-module.exports = (state = INITIAL_STATE, action) => {
+export default (state = INITIAL_STATE, action) => {
   switch(action.type) {
+    case 'TOGGLE_RICH_MODE': return Object.assign({}, state, { richTextMode: !state.richTextMode });
     case 'SET_FOCUS': return Object.assign({}, state, { focusedId: action.payload.tokId });
     case 'RESET_FOCUS': return Object.assign({}, state, { focusedId: null });
     case 'LOAD': return Object.assign({}, state, { toks: tokenize(action.payload) });
