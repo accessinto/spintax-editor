@@ -131,6 +131,7 @@ export default (state = INITIAL_STATE, action) => {
       });
     }
     case 'RELOAD_EDITOR': return Object.assign({}, INITIAL_STATE, { 
+      richTextMode: state.richTextMode,
       toks: tokenize(action.payload), 
       initialToks: state.initialToks, 
     });

@@ -278,7 +278,7 @@ class Widget extends Component {
   }
 
   handleEditModeChange() {
-    const { toks, editorState, setEditorState, reloadEditor } = this.props;
+    const { toks, editorState } = this.props;
     const { interactive } = this.state;
     this.setState({
       interactive: !interactive
@@ -293,8 +293,8 @@ class Widget extends Component {
       this.props.setEditorState(toks.map(t => t.t).join(''));
     } else {
       //const contentState = convertToRaw(editorState.getCurrentContent());
-      const markup = convertToHTML(convertFromRaw(editorState));
-      this.props.reloadEditor(markup);
+      // const markup = convertToHTML(convertFromRaw(editorState));
+      // this.props.reloadEditor(editorState);
     }
   }
 
@@ -307,18 +307,7 @@ class Widget extends Component {
       showUnspun,
       editorState, 
     } = this.props;
-    const { selObj, highlightedId, interactive } = this.state;
-    let syns = [];
-    const selectedToken = toks[focusedId];
-    if (selectedToken) {
-      const option = selectedToken.t;
-      if (option.startsWith('{') && option.endsWith('}')) {
-        const sliced = option.slice(1, -1);
-        syns = sliced.split('|');
-      } else {
-        syns = [option];
-      }
-    }
+    const { highlightedId, interactive } = this.state;
     const plainTextRenderer = (
       toks.map((tok) => (
         <span key={tok.id} id={`sw${tok.id}`}>

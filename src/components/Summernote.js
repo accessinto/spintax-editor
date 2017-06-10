@@ -10,19 +10,20 @@ import 'bootstrap/js/dropdown.js';
 import 'bootstrap/js/tooltip.js';
 import 'bootstrap/dist/css/bootstrap.css';
 
-import { setEditorState } from '../actions/EditorActions';
+import { reloadEditor } from '../actions/EditorActions';
 
 class RichTextEditor extends Component {
+
   onChange(content) {
-    console.log('onChange', content);
-    this.setEditorState(content);
-  }
+    this.props.reloadEditor(content);
+  } 
 
   render() {
-    const { htmlMarkup } = this.props;
+    const { html, codeview } = this.props;
     return (
       <ReactSummernote
-        value={htmlMarkup}
+        codeview={codeview}
+        value={html}
         options={{
           height: 350,
           dialogsInBody: true,
@@ -33,19 +34,20 @@ class RichTextEditor extends Component {
             ['para', ['ul', 'ol', 'paragraph']],
             ['table', ['table']],
             ['insert', ['link', 'picture', 'video']],
-            ['view', ['fullscreen', 'codeview']]
+            ['view', ['fullscreen']]
           ]
         }}
-        onChange={this.onChange}
+        onChange={this.onChange.bind(this)}
       />
     );
   }
 }
 
 const mapStateToProps = ({ spintax }) => ({
-  html: spintax.editorState
+  html: spintax.editorState,
+  codeview: !spintax.richTextMode
 })
 
 export default connect(mapStateToProps, {
-  setEditorState,
+  reloadEditor,
 })(RichTextEditor);
