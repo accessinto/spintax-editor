@@ -8,9 +8,9 @@ import { setEditorState } from '../actions/EditorActions';
 
 class WysiwygEditor extends Component {
 
-  onEditorStateChange(editorState) {
-    console.log(editorState.getCurrentContent());
-    const raw = convertToRaw(editorState.getCurrentContent());
+  onEditorStateChange(contentState) {
+    console.log(contentState);
+    const raw = convertToRaw(contentState);
     this.props.setEditorState(raw);
   }
 
@@ -21,11 +21,11 @@ class WysiwygEditor extends Component {
     return (
       <div className="add fancy wordai classes here">
         <Editor
-          editorState={editorStateC}
+          contentState={contentState}
           toolbarClassName="home-toolbar"
           wrapperClassName="home-wrapper"
           editorClassName="home-editor"
-          onEditorStateChange={this.onEditorStateChange.bind(this)} 
+          onContentStateChange={this.onEditorStateChange.bind(this)} 
         />
       </div>
     );

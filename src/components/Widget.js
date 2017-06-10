@@ -25,6 +25,7 @@ import WysiwygEditor from './WysiwygEditor';
 import Spinword from './Spinword';
 import SpinwordHtml from './SpinwordHtml';
 import ToolTip from './Tooltip';
+import Summernote from './Summernote';
 
 import { toggleSyn } from '../actions/SynsActions';
 import { 
@@ -283,13 +284,13 @@ class Widget extends Component {
       interactive: !interactive
     });
     if(interactive) {
-      const blocksFromHTML = convertFromHTML(toks.map(t => t.t).join(''));
-      const contentState = ContentState.createFromBlockArray(
-        blocksFromHTML.contentBlocks,
-        blocksFromHTML.entityMap
-      );
+      // const blocksFromHTML = convertFromHTML(toks.map(t => t.t).join(''));
+      // const contentState = ContentState.createFromBlockArray(
+      //   blocksFromHTML.contentBlocks,
+      //   blocksFromHTML.entityMap
+      // );
       //const currEditorState = EditorState.createWithContent(contentState);
-      this.props.setEditorState(convertToRaw(contentState));
+      this.props.setEditorState(toks.map(t => t.t).join(''));
     } else {
       //const contentState = convertToRaw(editorState.getCurrentContent());
       const markup = convertToHTML(convertFromRaw(editorState));
@@ -399,7 +400,7 @@ class Widget extends Component {
         <button onClick={this.handleEditModeChange.bind(this)}>
           {editorState ? 'Interactive' : 'Raw Edit'}
         </button>
-        { !interactive && <WysiwygEditor /> }
+        { !interactive && <Summernote /> }
         { 
           interactive 
           && 
