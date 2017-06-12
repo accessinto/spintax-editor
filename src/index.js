@@ -34,7 +34,6 @@ window.Perf = Perf;
 window.toggleRichTextMode = () => store.dispatch(toggleRichTextMode());
 window.toggleShowUnspun = () => store.dispatch(toggleShowUnspun());
 window.reloadEditor = sp => store.dispatch(reloadEditor(sp));
-window.loadEditor(RANDOM_SPINTAX3);
-//TODO REMOVE NEXT LINE BEFORE BUILDING
 window.loadEditor = sp => render(<App sp={sp} />, document.getElementById('root'));
-//window.loadEditor('<p>This is a stupid Test. </p>This is a stupid test.');
+//TODO REMOVE NEXT LINE BEFORE BUILDING
+window.loadEditor(RANDOM_SPINTAX3);
