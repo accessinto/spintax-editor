@@ -21,24 +21,26 @@ class RichTextEditor extends Component {
   render() {
     const { html, codeview } = this.props;
     return (
-      <ReactSummernote
-        codeview={codeview}
-        value={html}
-        options={{
-          height: 350,
-          dialogsInBody: true,
-          toolbar: [
-            ['style', ['style']],
-            ['font', ['bold', 'underline', 'clear']],
-            ['fontname', ['fontname']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['table', ['table']],
-            ['insert', ['link', 'picture', 'video']],
-            ['view', ['fullscreen']]
-          ]
-        }}
-        onChange={this.onChange.bind(this)}
-      />
+      <div class="row">
+        <ReactSummernote
+          codeview={codeview}
+          value={html}
+          options={{
+            height: 350,
+            dialogsInBody: true,
+            toolbar: [
+              ['style', ['style']],
+              ['font', ['bold', 'underline', 'clear']],
+              ['fontname', ['fontname']],
+              ['para', ['ul', 'ol', 'paragraph']],
+              ['table', ['table']],
+              ['insert', ['link', 'picture', 'video']],
+              ['view', ['fullscreen']]
+            ]
+          }}
+          onChange={this.onChange.bind(this)}
+        />
+      </div>
     );
   }
 }

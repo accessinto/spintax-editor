@@ -170,6 +170,7 @@ class Widget extends Component {
         const pFt = pipes.reduce((max, curr) => Math.max(toks[curr.matchId].matchId, max), tagExtendedFt);
         const startTokId = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), pAt);
         const endTokId = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), pFt);
+        debugger;
         //const finalA = document.getElementById(`sw${startTokId}`);
         //const finalF = document.getElementById(`sw${endTokId}`);
         //range.setStart(finalA, 0);
@@ -301,8 +302,8 @@ class Widget extends Component {
         <span key={tok.id} id={`sw${tok.id}`}>
           <Spinword 
             unspun={ showUnspun && tok.unspun }
-            tooltipSelected={focusedId === tok.id}
-            higlighted={highlightedId && inRange(tok.id, highlightedId, toks[highlightedId].matchId + 1)}
+            focused={focusedId === tok.id}
+            bracketHighlight={highlightedId && (tok.id === highlightedId || tok.id === toks[highlightedId].matchId)}
             selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
@@ -324,7 +325,7 @@ class Widget extends Component {
           {
             !focusedId && selection.end === tok.id
             &&
-            <ToolTip>
+            <ToolTip fid={tok.id}>
               <RewriteTooltip />
             </ToolTip>
           }
@@ -358,14 +359,14 @@ class Widget extends Component {
           {
             !focusedId && selection.end === tok.id
             &&
-            <ToolTip>
+            <ToolTip fid={tok.id}>
               <RewriteTooltip />
             </ToolTip>
           }
         </span>
       ))
     );
-
+    console.log(selection);
     //const currEditorState = 
     return (
       <div>

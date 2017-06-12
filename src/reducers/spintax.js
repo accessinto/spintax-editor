@@ -116,7 +116,7 @@ const tokenize = spintax => {
 }
 
 export default (state = INITIAL_STATE, action) => {
-  console.log('Reducer');
+  console.log(action.type);
   switch(action.type) {
     case 'TOGGLE_SHOW_UNSPUN': return Object.assign({}, state, { showUnspun: !state.showUnspun });
     case 'TOGGLE_RICH_MODE': return Object.assign({}, state, { richTextMode: !state.richTextMode });

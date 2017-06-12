@@ -14,7 +14,7 @@ class SpintaxContainer extends Component {
 
   render() {
     return (
-      <div>
+      <div id="spintax">
         <Widget />
       </div>
     );

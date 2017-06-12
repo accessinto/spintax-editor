@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import onClickOutside from 'react-onclickoutside';
-
 import { rewriteSyns } from '../actions/SynsActions';
 import { resetSelection } from '../actions/EditorActions';
 
 class RewriteTooltip extends Component {
+
+  state = {
+    hovered: false
+  }
 
   handleClickOutside(e) {
     this.props.resetSelection();
@@ -13,21 +16,32 @@ class RewriteTooltip extends Component {
 
   handleRewrite() {
     const { selectionText } = this.props;
-    console.log('GO ON');
     this.props.rewriteSyns(window.expand2(selectionText));
     //console.log(window.expand2(selectionText));
+  }
+
+  handleMouseOver() {
+
+  }
+
+  handleMouseOut() {
+
   }
 
   render () {
     const { selectionText } = this.props;
     return (
-      <div className="tooltip-content" style={{ background: 'black', color: 'green' }}>
-        {selectionText}
+      <div className="sentenceContainer">
         <button 
           onClick={this.handleRewrite.bind(this)}
+          type="button" 
+          className="rewrite btn btn-link"
         >
-          Rewrite
+          Rewrite Sentence
         </button>
+        <p className="rewriteSentence">
+          {selectionText}
+        </p> 
       </div>
     )
   }
