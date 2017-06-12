@@ -104,31 +104,33 @@ class Widget extends Component {
   }
 
   componentDidMount() {
-    //document.keydown = this.handleKeyDown.bind(this)
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
-    //document.addEventListener("selectionchange", this.mouseUp2.bind(this));
-  }
-
-  componentWillReceiveProps(nextProps) {
-    // console.log('cwr');
-    if(nextProps.focusedId !== null) {
-      //document.keydown = null;
-      //document.removeEventListener("keydown", this.handleKeyDown.bind(this));
-    }
   }
   
+  setFocus(id) {
+    this.props.setFocusId(id);
+  }
 
   mouseUp2(e) {
     console.log('mouse up')
-    const { toks, selection } = this.props;
+    const { toks } = this.props;
     const selObj = window.getSelection();
-    console.log(selObj.anchorNode, selObj.focusNode);
-    if(selObj.anchorNode.isSameNode(selObj.focusNode) || (selection.start && selection.end)) {
-      console.log('SAME NODE');
+    let infd = selObj.focusNode.dataset;
+    let inad = selObj.anchorNode.dataset;
+    if(infd && inad && infd.id === inad.id) {
+      //TRICKY CASE FOR IFRAMES
+      this.setFocus(Number(infd.id));
+      return;
+    }
+    infd = selObj.focusNode.parentElement.dataset;
+    inad = selObj.anchorNode.parentElement.dataset;
+    console.log('NON IFRAME', {f: selObj.focusNode.parentElement.dataset, a: selObj.anchorNode.parentElement.dataset});
+    if(infd && inad && infd.id === inad.id) {
+      this.setFocus(Number(infd.id));
       return;
     }
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
-      // debugger;
+      console.log('INSIDE MY MAIN BLOCK');
       try {
         const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
         const range = selObj.getRangeAt(0);
@@ -156,8 +158,6 @@ class Widget extends Component {
         }
         const ft = Number(fd.id);
         const at = Number(ad.id);
-        const o = [];
-        const c = [];
         const selectedToks = toks.slice(at, ft + 1);
         const oTags = selectedToks.filter(t => t.type === 2);
         const cTags = selectedToks.filter(t => t.type === 3);
@@ -170,7 +170,6 @@ class Widget extends Component {
         const pFt = pipes.reduce((max, curr) => Math.max(toks[curr.matchId].matchId, max), tagExtendedFt);
         const startTokId = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), pAt);
         const endTokId = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), pFt);
-        debugger;
         //const finalA = document.getElementById(`sw${startTokId}`);
         //const finalF = document.getElementById(`sw${endTokId}`);
         //range.setStart(finalA, 0);
@@ -181,6 +180,11 @@ class Widget extends Component {
         console.log('Error caught in mouseUp2: ', e);
       }
     }
+  }
+
+  mouseUpOutside() {
+    console.log('MOUSEUP OUTSIDE');
+    window.getSelection().removeAllRanges();
   }
 
   handleKeyDown(e) {
@@ -227,7 +231,8 @@ class Widget extends Component {
 
   handleSpinwordClick(tok) {
     if(tok.type === 4){
-      this.props.setFocusId(tok.id);
+      console.log('Deferred to selection code');
+      //this.props.setFocusId(tok.id);
     }
   }
 
@@ -273,17 +278,7 @@ class Widget extends Component {
       interactive: !interactive
     });
     if(interactive) {
-      // const blocksFromHTML = convertFromHTML(toks.map(t => t.t).join(''));
-      // const contentState = ContentState.createFromBlockArray(
-      //   blocksFromHTML.contentBlocks,
-      //   blocksFromHTML.entityMap
-      // );
-      //const currEditorState = EditorState.createWithContent(contentState);
       this.props.setEditorState(toks.map(t => t.t).join(''));
-    } else {
-      //const contentState = convertToRaw(editorState.getCurrentContent());
-      // const markup = convertToHTML(convertFromRaw(editorState));
-      // this.props.reloadEditor(editorState);
     }
   }
 
@@ -303,7 +298,7 @@ class Widget extends Component {
           <Spinword 
             unspun={ showUnspun && tok.unspun }
             focused={focusedId === tok.id}
-            bracketHighlight={highlightedId && (tok.id === highlightedId || tok.id === toks[highlightedId].matchId)}
+            bracketHighlighted={highlightedId && (tok.id === highlightedId || tok.id === toks[highlightedId].matchId)}
             selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
@@ -338,8 +333,8 @@ class Widget extends Component {
         <span key={tok.id} id={`sw${tok.id}`}>
           <SpinwordHtml 
             unspun={ showUnspun && tok.unspun }
-            tooltipSelected={focusedId === tok.id}
-            higlighted={highlightedId && inRange(tok.id, highlightedId, toks[highlightedId].matchId + 1)}
+            focused={focusedId === tok.id}
+            bracketHighlighted={highlightedId && (tok.id === highlightedId || tok.id === toks[highlightedId].matchId)}
             selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
@@ -366,8 +361,6 @@ class Widget extends Component {
         </span>
       ))
     );
-    console.log(selection);
-    //const currEditorState = 
     return (
       <div>
         <button onClick={this.props.toggleRichTextMode}>
@@ -377,14 +370,16 @@ class Widget extends Component {
           { showUnspun ? 'Hide Unspun' : 'Show Unspun' }
         </button>
         <button onClick={this.handleEditModeChange.bind(this)}>
-          {editorState ? 'Interactive' : 'Raw Edit'}
+          {editorState ? 'Interactive' : 'Summernote'}
         </button>
         { !interactive && <Summernote /> }
         { 
           interactive 
           && 
           <Spintax 
+            eventTypes="mouseup"
             handleMouseUp={this.mouseUp2.bind(this)}
+            handleMouseUpOutside={this.mouseUpOutside.bind(this)}
             richTextMode={richTextMode} 
             richTextRenderer={richTextRenderer} 
             plainTextRenderer={plainTextRenderer} 

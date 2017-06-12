@@ -1,10 +1,15 @@
 import React, { Component } from 'react';
+import onClickOutside from 'react-onclickoutside';
 
 class Spintax extends Component {
 
   componentDidMount() {
     const { handleMouseUp } = this.props;
     this.container.addEventListener('mouseup', handleMouseUp);
+  }
+  
+  handleClickOutside(e) {
+    this.props.handleMouseUpOutside();
   }
 
   render() {
@@ -22,4 +27,4 @@ class Spintax extends Component {
   }
 }
 
-export default Spintax;
+export default onClickOutside(Spintax);
