@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from 'react-dom';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
+import Perf from 'react-addons-perf';
 import { RANDOM_SPINTAX3, RANDOM_SPINTAX4 } from './components/mock';
 
 import { toggleSyn } from './actions/SynsActions';
@@ -27,11 +28,13 @@ const App = ({ sp }) => (
   </Provider>
 );
 
-window.loadEditor = sp => render(<App sp={sp} />, document.getElementById('root'));
+
+window.Perf = Perf;
 //window.switchToEditor = () => store.dispatch()
 window.toggleRichTextMode = () => store.dispatch(toggleRichTextMode());
 window.toggleShowUnspun = () => store.dispatch(toggleShowUnspun());
 window.reloadEditor = sp => store.dispatch(reloadEditor(sp));
-//TODO REMOVE NEXT LINE BEFORE BUILDING
 window.loadEditor(RANDOM_SPINTAX3);
+//TODO REMOVE NEXT LINE BEFORE BUILDING
+window.loadEditor = sp => render(<App sp={sp} />, document.getElementById('root'));
 //window.loadEditor('<p>This is a stupid Test. </p>This is a stupid test.');
