@@ -48,6 +48,8 @@ const tokenize = spintax => {
   let idGen = 0;
   const s = [];
   const b = [];
+  let sid = 0;
+  let bid = 0;
   while ((m = r4.exec(spintax)) !== null) {
     // console.log(m.index);
     // This is necessary to avoid infinite loops with zero-width matches
@@ -63,12 +65,18 @@ const tokenize = spintax => {
       end: m.index + m[0].length,
       type: m.indexOf(m[0], 1),
       t: m[0],
-    }
+    };
     if(type === 2) {
       s.push(id);
     }
-    if(type === 5) {
-      b.push(id);
+    if(type === 3) {
+      const matchId = s.pop();
+      toks[matchId] = Object.assign({
+        matchId: id,
+      }, toks[matchId]);
+      obj = Object.assign({
+        matchId,
+      }, obj)
     }
     if(type === 4) {
       const str = obj.t;
@@ -82,20 +90,11 @@ const tokenize = spintax => {
         syns: arr.map((syn) => ({ content: syn, selected: true }))
       }, obj);
     }
-    if(type === 7) {
-      const matchId = b[b.length - 1];
-      obj = Object.assign({
-        matchId
+    if(type === 5) {
+      b.push(id);
+      obj = Object.assign({}, {
+        bmid: ++bid,
       }, obj);
-    }
-    if(type === 3) {
-      const matchId = s.pop();
-      toks[matchId] = Object.assign({
-        matchId: id,
-      }, toks[matchId]);
-      obj = Object.assign({
-        matchId,
-      }, obj)
     }
     if(type === 6) {
       const matchId = b.pop();
@@ -103,7 +102,15 @@ const tokenize = spintax => {
         matchId: id,
       }, toks[matchId]);
       obj = Object.assign({
-        matchId
+        matchId,
+        bmid: bid--,
+      }, obj);
+    }
+    if(type === 7) {
+      const matchId = b[b.length - 1];
+      obj = Object.assign({
+        matchId,
+        bmid: bid,
       }, obj);
     }
     toks.push(obj);
@@ -182,7 +189,6 @@ export default (state = INITIAL_STATE, action) => {
           matchId: newMatchId,
         });
       });
-      debugger;
       return Object.assign({}, state, {
         focusedId: start,
         toks: [

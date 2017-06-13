@@ -31,7 +31,7 @@ class RewriteTooltip extends Component {
   render () {
     const { selectionText } = this.props;
     return (
-      <div className="sentenceContainer">
+      <div className="sentenceContainer" style={{background: 'black', color: 'yellow'}}>
         <button 
           onClick={this.handleRewrite.bind(this)}
           type="button" 

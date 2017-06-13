@@ -40,9 +40,7 @@ class Tooltip extends Component {
     const { children } = this.props;
     const { opacity, top, left } = this.state;
     const style = {
-      background: 'lavender',
-      color: 'black',
-      position: 'absolute',
+      display: 'block',
       zIndex: opacity ? 1000 : -1000,
       opacity: +opacity,
       top: (top || 0),
@@ -50,17 +48,12 @@ class Tooltip extends Component {
     };
     return (
       <div 
-        id="tc" 
         style={style}
+        ref={el => { this.tt = el }}
+        className="qtip qtip-default syns-tooltip qtip-bootstrap qtip-shadow qtip-rounded qtip-pos-tl qtip-focus"
       >
-        <div 
-          ref={el => { this.tt = el }}
-          style={{ position: 'static' }}
-          className="qtip qtip-default syns-tooltip qtip-bootstrap qtip-shadow qtip-rounded qtip-pos-tl qtip-focus"
-        >
-          <div className="qtip-content">
-            {children}
-          </div>
+        <div className="qtip-content">
+          {children}
         </div>
       </div>
     );

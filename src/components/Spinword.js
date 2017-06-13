@@ -40,7 +40,7 @@ class Spinword extends Component {
       >
         {t.t}
       </span>
-    )
+    );
   }
 }
 
