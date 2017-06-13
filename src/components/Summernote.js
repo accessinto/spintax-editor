@@ -21,7 +21,10 @@ class RichTextEditor extends Component {
   render() {
     const { html, codeview } = this.props;
     return (
-      <div class="row">
+      <div
+        id="summernote_container"
+        className="row wai-widget" 
+      >
         <ReactSummernote
           codeview={codeview}
           value={html}

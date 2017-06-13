@@ -105,6 +105,7 @@ class Widget extends Component {
 
   componentDidMount() {
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
+    //document.addEventListener("mouseup", this.mouseUp2.bind(this));
   }
   
   setFocus(id) {
@@ -115,19 +116,26 @@ class Widget extends Component {
     console.log('mouse up')
     const { toks, focusedId } = this.props;
     const selObj = window.getSelection();
+    console.log(selObj.focusNode);
     let infd = selObj.focusNode.dataset;
     let inad = selObj.anchorNode.dataset;
     console.log(selObj.getRangeAt(0).commonAncestorContainer.classList);
     if(infd && inad && infd.id && infd.id === inad.id) {
       //TRICKY CASE FOR IFRAMES
-      this.setFocus(Number(infd.id));
+      const selectedTok = toks[Number(infd.id)];
+      if(selectedTok.type === 4) {
+        this.setFocus(selectedTok.id);
+      }
       return;
     }
     infd = selObj.focusNode.parentElement.dataset;
     inad = selObj.anchorNode.parentElement.dataset;
     console.log('NON IFRAME', {f: selObj.focusNode.parentElement.dataset, a: selObj.anchorNode.parentElement.dataset});
     if(infd && inad && infd.id && infd.id === inad.id) {
-      this.setFocus(Number(infd.id));
+      const selectedTok = toks[Number(infd.id)];
+      if(selectedTok.type === 4) {
+        this.setFocus(selectedTok.id);
+      }
       return;
     }
     if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
@@ -157,8 +165,8 @@ class Widget extends Component {
         } else {
           ad = newa.parentElement.dataset;
         }
-        const ft = Number(fd.id);
-        const at = Number(ad.id);
+        const ft = Number(fd.id) || toks.length - 1;
+        const at = Number(ad.id) || 0;
         const selectedToks = toks.slice(at, ft + 1);
         const oTags = selectedToks.filter(t => t.type === 2);
         const cTags = selectedToks.filter(t => t.type === 3);
@@ -171,7 +179,6 @@ class Widget extends Component {
         const pFt = pipes.reduce((max, curr) => Math.max(toks[curr.matchId].matchId, max), tagExtendedFt);
         const startTokId = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), pAt);
         const endTokId = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), pFt);
-        debugger;
         //const finalA = document.getElementById(`sw${startTokId}`);
         //const finalF = document.getElementById(`sw${endTokId}`);
         //range.setStart(finalA, 0);
@@ -185,8 +192,87 @@ class Widget extends Component {
   }
 
   mouseUpOutside() {
+    const { toks } = this.props;
     console.log('MOUSEUP OUTSIDE');
-    window.getSelection().removeAllRanges();
+    const selObj = window.getSelection();
+    console.log(selObj.toString());
+    console.log('Anchor', selObj.anchorNode);
+    console.log('Focus', selObj.focusNode);
+    if(selObj.isCollapsed) {
+      console.log('Collapsed');
+      return;
+    }
+    let infd = selObj.focusNode.dataset;
+    let inad = selObj.anchorNode.dataset;
+    console.log(selObj.getRangeAt(0).commonAncestorContainer.classList);
+    if(infd && inad && infd.id && infd.id === inad.id) {
+      //TRICKY CASE FOR IFRAMES
+      const selectedTok = toks[Number(infd.id)];
+      if(selectedTok.type === 4) {
+        this.setFocus(selectedTok.id);
+      }
+      return;
+    }
+    infd = selObj.focusNode.parentElement.dataset;
+    inad = selObj.anchorNode.parentElement.dataset;
+    console.log('NON IFRAME', {f: selObj.focusNode.parentElement.dataset, a: selObj.anchorNode.parentElement.dataset});
+    if(infd && inad && infd.id && infd.id === inad.id) {
+      const selectedTok = toks[Number(infd.id)];
+      if(selectedTok.type === 4) {
+        this.setFocus(selectedTok.id);
+      }
+      return;
+    }
+
+    try {
+      const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
+      const range = selObj.getRangeAt(0);
+      const f = selObj.focusNode;
+      const a = selObj.anchorNode;
+      if(backwards) {
+        range.setStart(f, 0);
+        range.setEnd(a, a.textContent.length)
+      } else {
+        range.setStart(a, 0);
+        range.setEnd(f, f.textContent.length);
+      }
+      const newf = selObj.focusNode;
+      const newa = selObj.anchorNode;
+      let fd, ad;
+      if(newf.dataset) {
+        fd = newf.dataset;
+      } else {
+        fd = newf.parentElement.dataset;
+      }
+      if(newa.dataset) {
+        ad = newa.dataset;
+      } else {
+        ad = newa.parentElement.dataset;
+      }
+      const ft = Number(fd.id) || toks.length - 1;
+      const at = Number(ad.id) || 0;
+      const selectedToks = toks.slice(at, ft + 1);
+      const oTags = selectedToks.filter(t => t.type === 2);
+      const cTags = selectedToks.filter(t => t.type === 3);
+      const tagExtendedAt = cTags.reduce((min, curr) => (Math.min((curr.matchId + 1) || curr.id, min + 1) - 1), at);
+      const tagExtendedFt = oTags.reduce((max, curr) => Math.max(curr.matchId || curr.id, max), ft);
+      const oBracks = selectedToks.filter(t => t.type === 5);
+      const cBracks = selectedToks.filter(t => t.type === 6);
+      const pipes = selectedToks.filter(t => t.type === 7);
+      const pAt = pipes.reduce((min, curr) => Math.min(curr.matchId, min), tagExtendedAt);
+      const pFt = pipes.reduce((max, curr) => Math.max(toks[curr.matchId].matchId, max), tagExtendedFt);
+      const startTokId = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), pAt);
+      const endTokId = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), pFt);
+      //const finalA = document.getElementById(`sw${startTokId}`);
+      //const finalF = document.getElementById(`sw${endTokId}`);
+      //range.setStart(finalA, 0);
+      //range.setEnd(finalF, 1);
+      this.props.setSelectionRange(startTokId, endTokId);
+      selObj.removeAllRanges();
+    } catch(e) {
+      console.log('Error caught in mouseUp2: ', e);
+    }
+    
   }
 
   handleKeyDown(e) {
@@ -337,7 +423,7 @@ class Widget extends Component {
             unspun={ showUnspun && tok.unspun }
             focused={focusedId === tok.id}
             bracketHighlighted={highlightedId && (tok.id === highlightedId || tok.matchId === highlightedId || tok.matchId === toks[highlightedId].matchId)}
-            selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
+            selected={(selection.start || selection.start === 0)&& selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
             onMouseOut={this.onMouseLeave.bind(this, tok)}
@@ -364,7 +450,7 @@ class Widget extends Component {
       ))
     );
     return (
-      <div>
+      <div className="container-fluid">
         <button onClick={this.props.toggleRichTextMode}>
           { richTextMode ? 'Plain' : 'Rich Text' }
         </button>
@@ -380,7 +466,7 @@ class Widget extends Component {
           && 
           <Spintax 
             eventTypes="mouseup" 
-            handleMouseUp={this.mouseUp2.bind(this)} 
+            handleMouseUp={this.mouseUp2.bind(this)}
             handleMouseUpOutside={this.mouseUpOutside.bind(this)} 
             richTextMode={richTextMode} 
             richTextRenderer={richTextRenderer} 

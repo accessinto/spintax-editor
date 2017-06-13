@@ -24,7 +24,9 @@ const store = createStore(reducers, window.__REDUX_DEVTOOLS_EXTENSION__ && windo
 
 const App = ({ sp }) => (
   <Provider store={store}>
-    <SpintaxContainer spintax={sp} />
+    <div>
+      <SpintaxContainer spintax={sp} />
+    </div>
   </Provider>
 );
 
@@ -34,6 +36,6 @@ window.Perf = Perf;
 window.toggleRichTextMode = () => store.dispatch(toggleRichTextMode());
 window.toggleShowUnspun = () => store.dispatch(toggleShowUnspun());
 window.reloadEditor = sp => store.dispatch(reloadEditor(sp));
-window.loadEditor = sp => render(<App sp={sp} />, document.getElementById('root'));
+window.loadEditor = (sp, elementId) => render(<App sp={sp} />, document.getElementById(elementId));
 //TODO REMOVE NEXT LINE BEFORE BUILDING
-window.loadEditor(RANDOM_SPINTAX3);
+//window.loadEditor(RANDOM_SPINTAX3);

@@ -17,9 +17,8 @@ class Spintax extends Component {
     return (
       <div 
           ref={(el) => this.container = el}
-          id="sp"
-          className="sp" 
-          style={{ width: '1000px', minHeight: '350px' }}
+          id="spintax_container"
+          className="row wai-widget" 
         >
           { richTextMode ? richTextRenderer : plainTextRenderer }
         </div>

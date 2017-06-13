@@ -28,7 +28,7 @@ class SpinwordHtml extends Component {
     const spanClassNames = classNames(
       'sw',
       { 'temp-rewrite': selected },
-      { 'temp-edit': focused },
+      { 'temp temp-edit': focused },
       { 'highlight': bracketHighlighted },
       { 'temp-unspun-highlight': unspun }
     );
