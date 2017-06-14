@@ -1,3 +1,5 @@
+import tokenizer from '../utils/SpintaxTokenizer';
+
 const INITIAL_STATE = {
   initialToks: [],
   toks: [],
@@ -8,7 +10,9 @@ const INITIAL_STATE = {
   },
   richTextMode: false,
   showUnspun: false, 
+  initEditorState: null,
   editorState: null,
+  summernoteMode: false,
 };
 
 const replacementText = syns => {
@@ -24,114 +28,36 @@ const replacementText = syns => {
   return replacement;
 };
 
-const unspunTokenIds = toks => {
-  return toks
-      .filter(tok => tok.syns.length === 1)
-      .map(tok => tok.id);
-}
-
-const tokenize = spintax => {
-  let m;
-  const toks = [];
-  //const r = /(['\w]+|{[^{}]*})/g;
-  //const r2 = /(\s+)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-  //const r3 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|([{|}])|([^\w\s])/g;
-  const r4 = /(\s+)|(<[^\/].*?>)|(<\/?.*?>)|([\w\-:']+|{[^{}]*})|({)|(})|(\|)|([^\w\s])/g;
-  //1: whitespace
-  //2: opening tag
-  //3: closing tag
-  //4: SW
-  //5: Opening Brack
-  //6: Closing Brack
-  //7: Pipe
-  //8: Punctuation
-  let idGen = 0;
-  const s = [];
-  const b = [];
-  let sid = 0;
-  let bid = 0;
-  while ((m = r4.exec(spintax)) !== null) {
-    // console.log(m.index);
-    // This is necessary to avoid infinite loops with zero-width matches
-    if (m.index === r4.lastIndex) {
-        r4.lastIndex++;
-    }
-    const id = idGen++;
-    const type = m.indexOf(m[0], 1);
-    let obj = {
-      id, 
-      start: m.index,
-      length: m[0].length,
-      end: m.index + m[0].length,
-      type: m.indexOf(m[0], 1),
-      t: m[0],
-    };
-    if(type === 2) {
-      s.push(id);
-    }
-    if(type === 3) {
-      const matchId = s.pop();
-      toks[matchId] = Object.assign({
-        matchId: id,
-      }, toks[matchId]);
-      obj = Object.assign({
-        matchId,
-      }, obj)
-    }
-    if(type === 4) {
-      const str = obj.t;
-      let arr;
-      if(str.startsWith('{') && str.endsWith('}')) {
-        arr = str.slice(1, -1).split('|');
-      } else {
-        arr = [str];
-      }
-      obj = Object.assign({
-        syns: arr.map((syn) => ({ content: syn, selected: true }))
-      }, obj);
-    }
-    if(type === 5) {
-      b.push(id);
-      obj = Object.assign({}, {
-        bmid: ++bid,
-      }, obj);
-    }
-    if(type === 6) {
-      const matchId = b.pop();
-      toks[matchId] = Object.assign({
-        matchId: id,
-      }, toks[matchId]);
-      obj = Object.assign({
-        matchId,
-        bmid: bid--,
-      }, obj);
-    }
-    if(type === 7) {
-      const matchId = b[b.length - 1];
-      obj = Object.assign({
-        matchId,
-        bmid: bid,
-      }, obj);
-    }
-    toks.push(obj);
-  }
-  return toks.map(tok => {
-    return Object.assign({}, tok, {
-      unspun: tok.syns && tok.syns.length === 1
-    });
-  });
-}
-
 export default (state = INITIAL_STATE, action) => {
   console.log(action.type);
   switch(action.type) {
+    case 'SET_SUMMERNOTE_MODE': return Object.assign({}, state, { 
+      summernoteMode: true,
+      initEditorState: state.toks.map(t => t.t).join(''),
+      editorState: state.toks.map(t => t.t).join(''),
+      focusedId: null,
+      selection: {
+        start: null,
+        end: null,
+      }
+     });
+    case 'UNSET_SUMMERNOTE_MODE': return Object.assign({}, state, {
+      summernoteMode: false,
+      initEditorState: null,
+      editorState: null,
+      focusedId: null,
+      selection: {
+        start: null,
+        end: null,
+      }
+    });
     case 'TOGGLE_SHOW_UNSPUN': return Object.assign({}, state, { showUnspun: !state.showUnspun });
     case 'TOGGLE_RICH_MODE': return Object.assign({}, state, { richTextMode: !state.richTextMode });
     case 'SET_FOCUS': return Object.assign({}, state, { focusedId: action.payload.tokId });
     case 'RESET_FOCUS': return Object.assign({}, state, { focusedId: null });
     case 'SET_EDITOR_STATE': return Object.assign({}, state, { editorState: action.payload })
     case 'LOAD': {
-      const toks = tokenize(action.payload);
+      const toks = tokenizer(action.payload);
       return Object.assign({}, state, { 
         toks,
         initialToks: toks,
@@ -139,9 +65,17 @@ export default (state = INITIAL_STATE, action) => {
     }
     case 'RELOAD_EDITOR': return Object.assign({}, INITIAL_STATE, { 
       richTextMode: state.richTextMode,
-      toks: tokenize(action.payload), 
+      toks: tokenizer(action.payload), 
       initialToks: state.initialToks, 
     });
+    case 'RESET_EDITOR': return Object.assign({}, state, {
+      toks: state.initialToks,
+      focusedId: null,
+      selection: {
+        start: null, 
+        end: null, 
+      }
+    })
     case 'SET_SELECTION_RANGE': {
       const { start, end } = action.payload;
       return Object.assign({}, state, {
@@ -255,7 +189,7 @@ export default (state = INITIAL_STATE, action) => {
     case 'ADD_SYN_BEFORE': {
       const { tokId, syn } = action.payload;
       const pivot = state.toks[tokId];
-      const newToks = tokenize(` ${syn} `).map((tok) => {
+      const newToks = tokenizer(` ${syn} `).map((tok) => {
         let newMatchId = tok.matchId;
         if(tok.matchId) {
           newMatchId = tok.matchId + tokId;
@@ -293,7 +227,7 @@ export default (state = INITIAL_STATE, action) => {
     case 'ADD_SYN_AFTER': {
       const { tokId, syn } = action.payload;
       const pivot = state.toks[tokId];
-      const newToks = tokenize(` ${syn} `).map((tok) => {
+      const newToks = tokenizer(` ${syn} `).map((tok) => {
         let newMatchId = tok.matchId;
         if(tok.matchId) {
           newMatchId = tok.matchId + tokId;

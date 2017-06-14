@@ -17,8 +17,10 @@ class Spintax extends Component {
     return (
       <div 
           ref={(el) => this.container = el}
-          id="spintax_container"
           className="row wai-widget" 
+          style={{ 
+            fontFamily: 'Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace' ,
+          }}
         >
           { richTextMode ? richTextRenderer : plainTextRenderer }
         </div>

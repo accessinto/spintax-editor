@@ -1,3 +1,7 @@
+export const resetEditor = () => ({
+  type: 'RESET_EDITOR',
+})
+
 export const reloadEditor = str => ({
   type: 'RELOAD_EDITOR',
   payload: str, 
@@ -34,4 +38,12 @@ export const toggleRichTextMode = () => ({
 
 export const toggleShowUnspun = () => ({
   type: 'TOGGLE_SHOW_UNSPUN',
+});
+
+export const setSummernoteMode = () => ({
+  type: 'SET_SUMMERNOTE_MODE',
+});
+
+export const unsetSummernoteMode = () => ({
+  type: 'UNSET_SUMMERNOTE_MODE',
 });

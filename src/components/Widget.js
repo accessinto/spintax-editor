@@ -24,6 +24,8 @@ import {
   toggleShowUnspun, 
   setEditorState,
   reloadEditor,  
+  setSummernoteMode, 
+  unsetSummernoteMode, 
 } from '../actions/EditorActions';
 
 const tagMatch = html => {
@@ -138,7 +140,7 @@ class Widget extends Component {
       }
       return;
     }
-    if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('sp')) {
+    if(!selObj.isCollapsed && selObj.getRangeAt(0).commonAncestorContainer.nodeName !== '#text' && selObj.getRangeAt(0).commonAncestorContainer.classList.contains('wai-widget')) {
       console.log('INSIDE MY MAIN BLOCK');
       try {
         const backwards = selObj.anchorNode.compareDocumentPosition(selObj.focusNode) === 2;
@@ -360,14 +362,31 @@ class Widget extends Component {
   }
 
   handleEditModeChange() {
-    const { toks } = this.props;
-    const { interactive } = this.state;
-    this.setState({
-      interactive: !interactive
-    });
-    if(interactive) {
-      this.props.setEditorState(toks.map(t => t.t).join(''));
+    //const { toks, summernoteMode } = this.props;
+    window.lastButton = null;
+    this.props.setSummernoteMode();
+  }
+
+  updateSummernoteClick() {
+    if(!this.props.richTextMode) {
+      window.lastButton = 'Update'
+      this.props.unsetSummernoteMode();
+    } else {
+      this.props.reloadEditor(this.props.editorState);
     }
+  }
+
+  resetSummernoteClick() {
+    //window.lastButton = 'Reset'
+    this.props.unsetSummernoteMode();
+    this.props.setEditorState(this.props.initEditorState);
+    setTimeout(this.props.setSummernoteMode, 0);
+    //this.props.setSummernoteMode();
+  }
+
+  cancelSummernoteClick() {
+    window.lastButton = 'Cancel';
+    this.props.unsetSummernoteMode();
   }
 
   render() {
@@ -378,6 +397,7 @@ class Widget extends Component {
       richTextMode, 
       showUnspun,
       editorState, 
+      summernoteMode, 
     } = this.props;
     const { highlightedId, interactive } = this.state;
     const plainTextRenderer = (
@@ -387,7 +407,7 @@ class Widget extends Component {
             unspun={ showUnspun && tok.unspun }
             focused={focusedId === tok.id}
             bracketHighlighted={highlightedId && (tok.id === highlightedId || tok.matchId === highlightedId || tok.matchId === toks[highlightedId].matchId)}
-            selected={selection.start && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
+            selected={(selection.start || selection.start === 0) && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
             onMouseOut={this.onMouseLeave.bind(this, tok)}
@@ -423,7 +443,7 @@ class Widget extends Component {
             unspun={ showUnspun && tok.unspun }
             focused={focusedId === tok.id}
             bracketHighlighted={highlightedId && (tok.id === highlightedId || tok.matchId === highlightedId || tok.matchId === toks[highlightedId].matchId)}
-            selected={(selection.start || selection.start === 0)&& selection.end && inRange(tok.id, selection.start, selection.end + 1)}
+            selected={(selection.start || selection.start === 0) && selection.end && inRange(tok.id, selection.start, selection.end + 1)}
             t={tok} 
             onMouseOver={this.onMouseEnter.bind(this, tok)}
             onMouseOut={this.onMouseLeave.bind(this, tok)}
@@ -450,28 +470,31 @@ class Widget extends Component {
       ))
     );
     return (
-      <div className="container-fluid">
-        <button onClick={this.props.toggleRichTextMode}>
-          { richTextMode ? 'Plain' : 'Rich Text' }
-        </button>
-        <button onClick={this.props.toggleShowUnspun}>
-          { showUnspun ? 'Hide Unspun' : 'Show Unspun' }
-        </button>
-        <button onClick={this.handleEditModeChange.bind(this)}>
-          {editorState ? 'Interactive' : 'Summernote'}
-        </button>
-        { !interactive && <Summernote /> }
-        { 
-          interactive 
-          && 
-          <Spintax 
-            eventTypes="mouseup" 
-            handleMouseUp={this.mouseUp2.bind(this)}
-            handleMouseUpOutside={this.mouseUpOutside.bind(this)} 
-            richTextMode={richTextMode} 
-            richTextRenderer={richTextRenderer} 
-            plainTextRenderer={plainTextRenderer} 
-          />
+      <div>
+        <div className="container-fluid">
+          <button onClick={this.handleEditModeChange.bind(this)}>Summ</button>
+          { summernoteMode && <Summernote /> }
+          { 
+            !summernoteMode 
+            && 
+            <Spintax 
+              eventTypes="mouseup" 
+              handleMouseUp={this.mouseUp2.bind(this)}
+              handleMouseUpOutside={this.mouseUpOutside.bind(this)} 
+              richTextMode={richTextMode} 
+              richTextRenderer={richTextRenderer} 
+              plainTextRenderer={plainTextRenderer} 
+            />
+          }
+        </div>
+        {
+          summernoteMode 
+          &&
+          <div className="row">
+            <button className="btn btn-info" onClick={this.updateSummernoteClick.bind(this)}>Update</button>
+            <button className="btn btn-warning" onClick={this.cancelSummernoteClick.bind(this)}>Cancel</button>
+            <button className="btn btn-danger" onClick={this.resetSummernoteClick.bind(this)}>Reset</button>
+          </div>
         }
       </div>
     );
@@ -485,6 +508,8 @@ const mapStateToProps = ({ spintax }) => ({
   richTextMode: spintax.richTextMode,
   showUnspun: spintax.showUnspun, 
   editorState: spintax.editorState, 
+  initEditorState: spintax.initEditorState,
+  summernoteMode: spintax.summernoteMode,
 });
 
 export default connect(mapStateToProps, {
@@ -496,4 +521,6 @@ export default connect(mapStateToProps, {
   toggleShowUnspun, 
   setEditorState, 
   reloadEditor, 
+  setSummernoteMode, 
+  unsetSummernoteMode, 
 })(Widget);

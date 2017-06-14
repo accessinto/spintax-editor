@@ -29,7 +29,7 @@ class Tooltip extends Component {
   componentDidMount () {
     const node = document.getElementById(`sw${this.props.fid}`);
     const [left, top] = absoluteTopRightPosition(node);
-    node.scrollIntoView({block: 'end', behavior: 'smooth'});
+    //node.scrollIntoView({block: 'end', behavior: 'smooth'});
     this.setState({
       left,
       top, 

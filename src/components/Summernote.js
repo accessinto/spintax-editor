@@ -10,23 +10,37 @@ import 'bootstrap/js/dropdown.js';
 import 'bootstrap/js/tooltip.js';
 import 'bootstrap/dist/css/bootstrap.css';
 
-import { reloadEditor } from '../actions/EditorActions';
+import { setEditorState, reloadEditor, unsetSummernoteMode } from '../actions/EditorActions';
 
 class RichTextEditor extends Component {
 
-  onChange(content) {
-    this.props.reloadEditor(content);
+  onChange(content, $editor) {
+    const { codeview, html } = this.props;
+    console.log({html, codeview})
+    console.log(window.lastButton);
+    if(!codeview) {
+      this.props.setEditorState(content);
+      return;
+    }
+    if(codeview && window.lastButton) {
+      if(window.lastButton === 'Update') {
+        this.props.reloadEditor(content);
+      } else if(window.lastButton === 'Cancel') {
+        this.props.unsetSummernoteMode();
+      }
+    }
+
   } 
 
   render() {
     const { html, codeview } = this.props;
     return (
       <div
-        id="summernote_container"
-        className="row wai-widget" 
+        className="row wai-widget"
       >
         <ReactSummernote
           codeview={codeview}
+          onChange={this.onChange.bind(this)}
           value={html}
           options={{
             height: 350,
@@ -41,7 +55,6 @@ class RichTextEditor extends Component {
               ['view', ['fullscreen']]
             ]
           }}
-          onChange={this.onChange.bind(this)}
         />
       </div>
     );
@@ -50,9 +63,11 @@ class RichTextEditor extends Component {
 
 const mapStateToProps = ({ spintax }) => ({
   html: spintax.editorState,
-  codeview: !spintax.richTextMode
+  codeview: !spintax.richTextMode,
 })
 
 export default connect(mapStateToProps, {
   reloadEditor,
+  setEditorState, 
+  unsetSummernoteMode
 })(RichTextEditor);

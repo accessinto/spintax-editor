@@ -147,7 +147,6 @@ class SynsTooltip extends Component {
             className={syn.selected ? 'selected' : 'unselected'}
             onClick={this.handleSynClick.bind(this, i)}
           >
-            {syn.selected ? 'Sel: ' : 'UnSel: '}
             {syn.content}
           </li>
         ))}
