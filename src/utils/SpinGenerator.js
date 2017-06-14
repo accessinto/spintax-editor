@@ -49,8 +49,10 @@ export default (toks, type, richText) => {
   if(type === 'BEST') { spin = bestSpin(spintax); }
   else if(type === 'REGULAR') { spin = randomSpin(spintax); }
   else if(type === 'BETTER') { spin = betterSpin(spintax); }
+  console.log(spin)
   if(!richText) {
     spin = escapeHtml(spin);
+    console.log('Spin after escape', spin);
   }
   return spin;
 };
