@@ -55,4 +55,4 @@ window.loadEditor = (sp, elementId) => render(<App sp={sp} />, document.getEleme
 window.getSpin = type => generateSpin(store.getState().spintax.toks, type);
 window.rawSpintax = store.getState().spintax.toks.map(tok => tok.t).join('');
 //TODO REMOVE NEXT LINE BEFORE BUILDING
-window.loadEditor(RANDOM_SPINTAX4, 'root');
+// window.loadEditor(RANDOM_SPINTAX4, 'root');
