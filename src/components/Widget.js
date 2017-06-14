@@ -181,12 +181,12 @@ class Widget extends Component {
         const pFt = pipes.reduce((max, curr) => Math.max(toks[curr.matchId].matchId, max), tagExtendedFt);
         const startTokId = cBracks.reduce((min, curr) => Math.min(curr.matchId, min), pAt);
         const endTokId = oBracks.reduce((max, curr) => Math.max(curr.matchId, max), pFt);
-        //const finalA = document.getElementById(`sw${startTokId}`);
-        //const finalF = document.getElementById(`sw${endTokId}`);
-        //range.setStart(finalA, 0);
-        //range.setEnd(finalF, 1);
+        const finalA = document.getElementById(`sw${startTokId}`);
+        const finalF = document.getElementById(`sw${endTokId}`);
+        range.setStart(finalA, 0);
+        range.setEnd(finalF, 1);
         this.props.setSelectionRange(startTokId, endTokId);
-        selObj.removeAllRanges();
+        // selObj.removeAllRanges();
       } catch(e) {
         console.log('Error caught in mouseUp2: ', e);
       }
@@ -472,7 +472,6 @@ class Widget extends Component {
     return (
       <div>
         <div className="container-fluid">
-          <button onClick={this.handleEditModeChange.bind(this)}>Summ</button>
           { summernoteMode && <Summernote /> }
           { 
             !summernoteMode 
@@ -490,7 +489,7 @@ class Widget extends Component {
         {
           summernoteMode 
           &&
-          <div className="row">
+          <div>
             <button className="btn btn-info" onClick={this.updateSummernoteClick.bind(this)}>Update</button>
             <button className="btn btn-warning" onClick={this.cancelSummernoteClick.bind(this)}>Cancel</button>
             <button className="btn btn-danger" onClick={this.resetSummernoteClick.bind(this)}>Reset</button>

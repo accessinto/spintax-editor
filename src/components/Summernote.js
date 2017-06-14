@@ -4,6 +4,8 @@ import ReactSummernote from 'react-summernote';
 import 'react-summernote/dist/react-summernote.css'; // import styles
 // import 'react-summernote/lang/summernote-ru-RU'; // you can import any other locale
 
+import $ from 'jquery';
+
 // Import bootstrap(v3 or v4) dependencies
 import 'bootstrap/js/modal.js';
 import 'bootstrap/js/dropdown.js';
@@ -25,8 +27,10 @@ class RichTextEditor extends Component {
     if(codeview && window.lastButton) {
       if(window.lastButton === 'Update') {
         this.props.reloadEditor(content);
+        $('#edit-spintax').show();
       } else if(window.lastButton === 'Cancel') {
         this.props.unsetSummernoteMode();
+        $('#edit-spintax').show();
       }
     }
 

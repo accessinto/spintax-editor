@@ -14,7 +14,7 @@ import {
   toggleRichTextMode, 
   toggleShowUnspun,  
   setEditorState, 
-  setSummernoteMode
+  setSummernoteMode, 
   reloadEditor, 
 } from './actions/EditorActions';
 
@@ -40,16 +40,12 @@ window.store = store;
 window.lastButton = null;
 //window.switchToEditor = () => store.dispatch()
 window.randSpintax = RANDOM_SPINTAX3;
-window.toggleSummernoteMode = () => {
-  const state = store.getState();
-  if(!state.spintax.summernoteMode) {
-    store.dispatch(setEditorState(state.spintax.toks.map(tok => tok.t).join('')));
-  }
-  store.dispatch(toggleSummernoteMode());
-};
 
-
-window.setSummernoteMode = () => store.dispatch(setSummernoteMode())
+window.richTextMode = store.getState().spintax.richTextMode;
+window.setSummernoteMode = () => {
+  window.lastButton = null;
+  store.dispatch(setSummernoteMode());
+}
 window.toggleRichTextMode = () => store.dispatch(toggleRichTextMode());
 window.toggleShowUnspun = () => store.dispatch(toggleShowUnspun());
 window.reloadEditor = sp => store.dispatch(reloadEditor(sp));
